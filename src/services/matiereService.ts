@@ -32,7 +32,7 @@ export const MatiereService = {
         return response.data;
     },
     deleteMatiere: async (id: number) => {
-        const response = await api.delete(`/api/matieres/${id}`);
+        const response = await api.delete(`/api/matieres/delete/${id}`);
         return response.data;
     }
 }

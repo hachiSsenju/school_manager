@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { LayoutDashboard, GraduationCap, School, Users, DollarSign, FileText, Menu, X, User } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, School, Users, DollarSign, FileText, Menu, X, User, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SessionServices } from '../services/sessionServices';
 import Profile from './Profile';
@@ -14,6 +14,7 @@ const menuItems = [
   { id: 'Classes', label: 'Classes', icon: School, path: '/classes' },
   { id: 'teachers', label: 'Professeurs', icon: Users, path: '/teachers' },
   { id: 'finances', label: 'Finances', icon: DollarSign, path: '/finances' },
+  { id: 'history', label: 'Historique', icon: History, path: '/history' },
   // { id: 'reports', label: 'Bulletins', icon: FileText, path: '/reports' },
 ];
 
@@ -69,15 +70,14 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 transition-transform duration-300 z-50 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 w-64`}
+        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 transition-transform duration-300 z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 w-64`}
       >
         <div className="p-6 border-b border-gray-200">
           {/* Logo Placeholder */}
           <div className="w-full flex items-center justify-center">
             {/* <div className="w-full h-24 border-2 border-gray-400 bg-white flex items-center justify-center rounded"> */}
-             <img src={logo} alt="School Logo" className="max-h-full max-w-full" />
+            <img src={logo} alt="School Logo" className="max-h-full max-w-full" />
             {/* </div> */}
           </div>
         </div>

@@ -11,6 +11,7 @@ import { SessionServices } from "./services/sessionServices";
 import { ClassDetails } from "./pages/ClasseDetails";
 import { StudentDetails } from "./pages/StudentDetails";
 import { ProfDetails } from "./pages/ProfDetails";
+import History from "./pages/History";
 // import ClassDetails from "./pages/ClasseDetails";
 
 function App() {
@@ -26,13 +27,14 @@ function App() {
           <Route path="/teachers" element={<Teachers />} />
           <Route path="/teachers/:id" element={<ProfDetails />} />
           <Route path="/finances" element={<Finances />} />
+          <Route path="/history" element={<History />} />
           <Route path="/welcome" element={<DashboardWelcomePage />} />
           <Route path="/reports" element={<GradesPage />} />
         </Routes>
       </Layout>
     </Router>
-  ) : 
-  <DashboardWelcomePage/>
+  ) :
+    <DashboardWelcomePage />
 }
 
 export default App;

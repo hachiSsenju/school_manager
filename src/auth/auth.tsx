@@ -19,25 +19,23 @@ export function AuthForms() {
   async function handleSubmit() {
     try {
       if (isRegister) {
-        
         const response = await AuthService.register(formData);
         if (response) {
           alert("User successfully registered");
         } else {
           console.error("Registration failed:", response.message);
         }
-      }
-      else {
-      console.log("Logging in user:", formData);
-      const response = await AuthService.login(
-        formData.email,
-        formData.password
-      );
-      if (response.token) {
-        sessionStorage.setItem("access_token", response.token);
-        window.location.reload(); // Reload to refresh the page state
       } else {
-        console.error("Login failed:", response.message || "Unknown error");
+        console.log("Logging in user:", formData);
+        const response = await AuthService.login(
+          formData.email,
+          formData.password
+        );
+        if (response.token) {
+          sessionStorage.setItem("access_token", response.token);
+          window.location.reload(); // Reload to refresh the page state
+        } else {
+          console.error("Login failed:", response.message || "Unknown error");
         }
       }
     } catch (error) {
@@ -220,12 +218,7 @@ export function AuthForms() {
           ) : (
             <>
               Pas encore de compte ?{" "}
-              <button
-                onClick={() => setIsRegister(true)}
-                className="text-blue-600 hover:underline"
-              >
-                S’inscrire
-              </button>
+              <a style={{color:"blue"}}href="https://wa.me/+221761436770?text=Bonjour Je suis intéressé par le logiciel de gestion scolaire">nous contacter</a>
             </>
           )}
         </div>
