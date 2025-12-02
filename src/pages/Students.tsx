@@ -568,7 +568,6 @@ export function StudentsManager() {
                   </label>
                   <select
                     name="classId"
-                    required
                     defaultValue={editingStudent?.classe.id || ""}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >

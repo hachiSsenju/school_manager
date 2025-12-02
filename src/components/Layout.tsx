@@ -10,9 +10,9 @@ interface LayoutProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
-  { id: 'students', label: 'Élèves', icon: GraduationCap, path: '/students' },
-  { id: 'Classes', label: 'Classes', icon: School, path: '/classes' },
   { id: 'teachers', label: 'Professeurs', icon: Users, path: '/teachers' },
+  { id: 'Classes', label: 'Classes', icon: School, path: '/classes' },
+  { id: 'students', label: 'Élèves', icon: GraduationCap, path: '/students' },
   { id: 'finances', label: 'Finances', icon: DollarSign, path: '/finances' },
   { id: 'history', label: 'Historique', icon: History, path: '/history' },
   // { id: 'reports', label: 'Bulletins', icon: FileText, path: '/reports' },
@@ -77,7 +77,7 @@ export default function Layout({ children }: LayoutProps) {
           {/* Logo Placeholder */}
           <div className="w-full flex items-center justify-center">
             {/* <div className="w-full h-24 border-2 border-gray-400 bg-white flex items-center justify-center rounded"> */}
-            <img src={logo} alt="School Logo" className="max-h-full max-w-full" />
+            {/* <img src={logo} alt="School Logo" className="max-h-full max-w-full" /> */}
             {/* </div> */}
           </div>
         </div>
