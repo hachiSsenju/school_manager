@@ -568,7 +568,7 @@ export function StudentDetails() {
                     onChange={(e) => setSelectedClass(Number(e.target.value))}
                     className="border border-gray-300 rounded px-3 py-1 text-sm flex-1"
                   >
-                    <option value="">Sélectionner une classe</option>
+                    {/* <option value="">Sélectionner une classe</option> */}
                     {filteredClasses.map((cls) => (
                       <option key={cls.id} value={cls.id}>
                         {cls.nom}
