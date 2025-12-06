@@ -60,7 +60,7 @@ export function ClassDetails() {
   const coefficientInputRef = useRef<HTMLInputElement>(null);
   const bulletinRef = useRef<HTMLDivElement>(null);
   const classId = Number(useParams().id);
-  
+
   useEffect(() => {
     fetchClassData();
   }, [classId]);
@@ -117,18 +117,18 @@ export function ClassDetails() {
     const prenomPrefix = prenom.substring(0, 2).toUpperCase();
     const birthYear = new Date(birthday).getFullYear().toString().slice(-2);
     const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-    
+
     const baseMatricule = `${nomPrefix}${prenomPrefix}${birthYear}${randomNum}`;
-    
+
     // Check if matricule already exists (check against all school students)
     const existingMatricules = school?.eleves?.map(s => s.matricule).filter(Boolean) || [];
-    
+
     if (existingMatricules.includes(baseMatricule)) {
       // Add additional random digits if exists
       const extraRandom = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
       return `${baseMatricule}${extraRandom}`;
     }
-    
+
     return baseMatricule;
   };
 
@@ -175,7 +175,7 @@ export function ClassDetails() {
         const nom = formData.get("lastName") as string;
         const prenom = formData.get("firstName") as string;
         const birthday = formData.get("dateOfBirth") as string;
-        
+
         await EleveService.addEleve({
           nom: nom,
           prenom: prenom,
@@ -249,7 +249,7 @@ export function ClassDetails() {
         ClasseService.getById(classId),
       ]);
       setCurrentStudent(studentData);
-      
+
       // Use getByEleveAndClasse to get bulletin with cycles, rank, and moyenne
       const bulletin = await BulletinService.getByEleveAndClasse(
         String(selectedStudent),
@@ -306,9 +306,9 @@ export function ClassDetails() {
   // Function to export bulletin as Word
   const exportToWord = () => {
     if (!bulletinRef.current) return;
-    
+
     const content = bulletinRef.current.innerHTML;
-    
+
     // Create a blob with HTML content that Word can open
     const blob = new Blob(
       [
@@ -331,7 +331,7 @@ export function ClassDetails() {
       ],
       { type: "application/msword" }
     );
-    
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -346,7 +346,7 @@ export function ClassDetails() {
 
     // Prepare data for Excel
     const data: any[] = [];
-    
+
     // Header
     data.push(["BULLETIN DE NOTES - ANNÉE SCOLAIRE 2024-2025"]);
     data.push([]);
@@ -354,7 +354,7 @@ export function ClassDetails() {
     data.push(["Classe:", currentStudent.classe?.nom || ""]);
     data.push(["Trimestre:", resolveTrimesterCode()]);
     data.push([]);
-    
+
     // Add grades data if available
     if (currentBulletin.grades && currentBulletin.grades.length > 0) {
       data.push(["Matière", "Type", "Note", "Date"]);
@@ -367,11 +367,11 @@ export function ClassDetails() {
         ]);
       });
     }
-    
+
     // Create workbook
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
-    
+
     // Set column widths
     ws["!cols"] = [
       { wch: 30 }, // Matière
@@ -379,7 +379,7 @@ export function ClassDetails() {
       { wch: 10 }, // Note
       { wch: 12 }  // Date
     ];
-    
+
     XLSX.utils.book_append_sheet(wb, ws, "Bulletin");
     XLSX.writeFile(wb, `bulletin_${currentStudent.nom}_${currentStudent.prenom}_${resolveTrimesterCode()}.xlsx`);
   };
@@ -393,7 +393,7 @@ export function ClassDetails() {
         String(classId),
         selectedTrimester,
         "2024-2025",
-        
+
       );
       // Refresh the bulletin
       await refreshBulletin();
@@ -484,11 +484,10 @@ export function ClassDetails() {
             <button
               key={key}
               onClick={() => setActiveSection(key)}
-              className={`flex items-center px-6 py-4 font-medium text-sm border-b-2 transition-colors ${
-                activeSection === key
+              className={`flex items-center px-6 py-4 font-medium text-sm border-b-2 transition-colors ${activeSection === key
                   ? "border-blue-600 text-blue-600 bg-blue-50"
                   : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <Icon size={18} className="mr-2" />
               {label}
@@ -697,31 +696,28 @@ export function ClassDetails() {
                   <span className="text-xs font-medium text-gray-700">Colorier par trimestre:</span>
                   <button
                     onClick={() => setHighlightedTrimester(highlightedTrimester === 0 ? null : 0)}
-                    className={`px-3 py-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${
-                      highlightedTrimester === 0 
-                        ? "bg-red-600 text-white" 
+                    className={`px-3 py-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${highlightedTrimester === 0
+                        ? "bg-red-600 text-white"
                         : "bg-gray-200 hover:bg-gray-300"
-                    }`}
+                      }`}
                   >
                     1er Trimestre
                   </button>
                   <button
                     onClick={() => setHighlightedTrimester(highlightedTrimester === 1 ? null : 1)}
-                    className={`px-3 py-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${
-                      highlightedTrimester === 1 
-                        ? "bg-green-600 text-white" 
+                    className={`px-3 py-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${highlightedTrimester === 1
+                        ? "bg-green-600 text-white"
                         : "bg-gray-200 hover:bg-gray-300"
-                    }`}
+                      }`}
                   >
                     2ème Trimestre
                   </button>
                   <button
                     onClick={() => setHighlightedTrimester(highlightedTrimester === 2 ? null : 2)}
-                    className={`px-3 py-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${
-                      highlightedTrimester === 2 
-                        ? "bg-blue-600 text-white" 
+                    className={`px-3 py-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${highlightedTrimester === 2
+                        ? "bg-blue-600 text-white"
                         : "bg-gray-200 hover:bg-gray-300"
-                    }`}
+                      }`}
                   >
                     3ème Trimestre
                   </button>
@@ -735,69 +731,69 @@ export function ClassDetails() {
 
                 {/* Display Bulletin */}
                 <div ref={bulletinRef} className="flex-1">
-                {((typeof currentBulletin?.classe === 'object' && currentBulletin?.classe?.niveau) || classe?.niveau) === "lycee" ||
-                ((typeof currentBulletin?.classe === 'object' && currentBulletin?.classe?.niveau) || classe?.niveau) === "college" ? (
-                  currentBulletin ? (
-                    <BulletinPage
-                      etudiant={currentStudent}
-                      classeT={classId}
-                      bulletin={currentBulletin}
-                      onRefresh={refreshBulletin}
-                      highlightedTrimester={highlightedTrimester}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                      <div className="text-center space-y-2">
-                        <p className="text-gray-600 text-base">
-                          Aucun bulletin n'a été créé pour cet élève dans cette
-                          classe et ce cycle.
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Sélectionnez une autre classe ou cycle, ou créez un
-                          nouveau bulletin.
-                        </p>
+                  {((typeof currentBulletin?.classe === 'object' && currentBulletin?.classe?.niveau) || classe?.niveau) === "lycee" ||
+                    ((typeof currentBulletin?.classe === 'object' && currentBulletin?.classe?.niveau) || classe?.niveau) === "college" ? (
+                    currentBulletin ? (
+                      <BulletinPage
+                        etudiant={currentStudent}
+                        classeT={classId}
+                        bulletin={currentBulletin}
+                        onRefresh={refreshBulletin}
+                        highlightedTrimester={highlightedTrimester}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="text-center space-y-2">
+                          <p className="text-gray-600 text-base">
+                            Aucun bulletin n'a été créé pour cet élève dans cette
+                            classe et ce cycle.
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Sélectionnez une autre classe ou cycle, ou créez un
+                            nouveau bulletin.
+                          </p>
+                        </div>
+                        <button
+                          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
+                          onClick={handleCreateBulletin}
+                          disabled={loading}
+                        >
+                          <FileText size={18} className="mr-2" />
+                          {loading ? "Création en cours..." : "Créer un bulletin"}
+                        </button>
                       </div>
-                      <button
-                        className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
-                        onClick={handleCreateBulletin}
-                        disabled={loading}
-                      >
-                        <FileText size={18} className="mr-2" />
-                        {loading ? "Création en cours..." : "Créer un bulletin"}
-                      </button>
-                    </div>
-                  )
-                ) : (
-                  currentBulletin ? (
-                  <ResultatsCompositions 
-                    etudiant={currentBulletin.eleve}
-                    classeT={classId}
-                    bulletin={currentBulletin}
-                    onRefresh={refreshBulletin}
-                  />
+                    )
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                      <div className="text-center space-y-2">
-                        <p className="text-gray-600 text-base">
-                          Aucun bulletin n'a été créé pour cet élève dans cette
-                          classe et ce cycle.
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Sélectionnez une autre classe ou cycle, ou créez un
-                          nouveau bulletin.
-                        </p>
+                    currentBulletin ? (
+                      <ResultatsCompositions
+                        etudiant={currentBulletin.eleve}
+                        classeT={classId}
+                        bulletin={currentBulletin}
+                        onRefresh={refreshBulletin}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="text-center space-y-2">
+                          <p className="text-gray-600 text-base">
+                            Aucun bulletin n'a été créé pour cet élève dans cette
+                            classe et ce cycle.
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Sélectionnez une autre classe ou cycle, ou créez un
+                            nouveau bulletin.
+                          </p>
+                        </div>
+                        <button
+                          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
+                          onClick={handleCreateBulletin}
+                          disabled={loading}
+                        >
+                          <FileText size={18} className="mr-2" />
+                          {loading ? "Création en cours..." : "Créer un bulletin"}
+                        </button>
                       </div>
-                      <button
-                        className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
-                        onClick={handleCreateBulletin}
-                        disabled={loading}
-                      >
-                        <FileText size={18} className="mr-2" />
-                        {loading ? "Création en cours..." : "Créer un bulletin"}
-                      </button>
-                    </div>
-                  )
-                )}
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -813,20 +809,20 @@ export function ClassDetails() {
               {activeSection === "eleves"
                 ? "Nouvel Élève"
                 : isEditMode
-                ? "Modifier la Matière"
-                : "Ajouter une Matière"}
+                  ? "Modifier la Matière"
+                  : "Ajouter une Matière"}
             </h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.target as HTMLFormElement;
                 const formData = new FormData(form);
-                
+
                 // Set coefficient value from our state if it exists
                 if (coefficientValue) {
                   formData.set("coefficient", coefficientValue);
                 }
-                
+
                 handleAddItem(
                   formData,
                   activeSection === "eleves" ? "eleve" : "matiere"
@@ -865,6 +861,7 @@ export function ClassDetails() {
                       <input
                         type="date"
                         name="dateOfBirth"
+                        max={new Date().toISOString().split('T')[0]}
                         required
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -931,7 +928,7 @@ export function ClassDetails() {
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
-                   
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Professeur
@@ -973,7 +970,7 @@ export function ClassDetails() {
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Ex: 2, 2.5, 3.75"
                       />
-                      
+
                       {/* Mini Keyboard */}
                       {showKeyboard && (
                         <div className="mt-2 p-3 bg-gray-50 border border-gray-300 rounded-lg">
@@ -1069,11 +1066,11 @@ export function ClassDetails() {
                   type="submit"
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                  {activeSection === "eleves" 
-                    ? "Ajouter l'élève" 
-                    : isEditMode 
-                    ? "Enregistrer les modifications" 
-                    : "Ajouter"}
+                  {activeSection === "eleves"
+                    ? "Ajouter l'élève"
+                    : isEditMode
+                      ? "Enregistrer les modifications"
+                      : "Ajouter"}
                 </button>
               </div>
             </form>

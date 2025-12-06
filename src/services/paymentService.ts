@@ -22,6 +22,10 @@ export const paymentService = {
     const response = await api.get(`/api/payment/${ecole_id}`);
     return response.data;
   },
+  getbyId: async (id : any) => {
+    const response = await api.get(`/api/payment/id/${id}`);
+    return response.data;
+  },
 //   getAllPaymentsByClasseId: async (ecole_id : any) => {
 //     const response = await api.get(`/api/payment/${ecole_id}`);
 //     return response.data;

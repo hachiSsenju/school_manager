@@ -4,6 +4,7 @@ import { EcoleService } from '../services/ecoleServices';
 import { SessionServices } from '../services/sessionServices';
 import { Plus, Search, Edit, Trash2, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { Ecole, Student, Classe, Prof } from '../types';
+import Swal from 'sweetalert2';
 
 interface Payment {
   id: number | string;
@@ -68,17 +69,17 @@ export default function Finances() {
       filtered = filtered.filter((p) => {
         const paymentType = p.type?.toLowerCase() || '';
         if (filterType === 'income') {
-          return paymentType.includes('revenus') || 
-                 paymentType.includes('revenu') ||
-                 paymentType === 'inscription' ||
-                 paymentType === 'mensualite' ||
-                 paymentType === 'trimestre';
+          return paymentType.includes('revenus') ||
+            paymentType.includes('revenu') ||
+            paymentType === 'inscription' ||
+            paymentType === 'mensualite' ||
+            paymentType === 'trimestre';
         } else {
-          return paymentType.includes('dépenses') || 
-                 paymentType.includes('depenses') ||
-                 paymentType.includes('dépense') ||
-                 paymentType.includes('depense') ||
-                 paymentType === 'salaire';
+          return paymentType.includes('dépenses') ||
+            paymentType.includes('depenses') ||
+            paymentType.includes('dépense') ||
+            paymentType.includes('depense') ||
+            paymentType === 'salaire';
         }
       });
     }
@@ -133,12 +134,12 @@ export default function Finances() {
       prof_id: formData.prof_id || null,
     };
 
-      try {
-        if (editingPayment) {
-          await paymentService.updatePayment(editingPayment.id.toString(), paymentData);
-        } else {
-          await paymentService.addPayment(paymentData);
-        }
+    try {
+      if (editingPayment) {
+        await paymentService.updatePayment(editingPayment.id.toString(), paymentData);
+      } else {
+        await paymentService.addPayment(paymentData);
+      }
 
       setShowModal(false);
       setEditingPayment(null);
@@ -153,17 +154,17 @@ export default function Finances() {
     setEditingPayment(payment);
     // Determine if it's income or expense based on payment type
     const paymentTypeLower = payment.type?.toLowerCase() || '';
-    const isExpense = paymentTypeLower.includes('dépenses') || 
-                     paymentTypeLower.includes('depenses') ||
-                     paymentTypeLower.includes('dépense') ||
-                     paymentTypeLower.includes('depense') ||
-                     paymentTypeLower === 'salaire';
-    const isIncome = !isExpense && (paymentTypeLower.includes('revenus') || 
-                     paymentTypeLower.includes('revenu') ||
-                     paymentTypeLower === 'inscription' ||
-                     paymentTypeLower === 'mensualite' ||
-                     paymentTypeLower === 'trimestre');
-    
+    const isExpense = paymentTypeLower.includes('dépenses') ||
+      paymentTypeLower.includes('depenses') ||
+      paymentTypeLower.includes('dépense') ||
+      paymentTypeLower.includes('depense') ||
+      paymentTypeLower === 'salaire';
+    const isIncome = !isExpense && (paymentTypeLower.includes('revenus') ||
+      paymentTypeLower.includes('revenu') ||
+      paymentTypeLower === 'inscription' ||
+      paymentTypeLower === 'mensualite' ||
+      paymentTypeLower === 'trimestre');
+
     // Parse date - handle DD/MM/YYYY format
     const parseDateForInput = (dateStr: string) => {
       if (!dateStr) return new Date().toISOString().split('T')[0];
@@ -182,7 +183,7 @@ export default function Finances() {
     const motifValue = ['inscription', 'mensualite', 'trimestre', 'salaire', 'autre'].includes(motifLower)
       ? motifLower as 'inscription' | 'mensualite' | 'trimestre' | 'salaire' | 'autre'
       : motif; // Keep custom value as-is
-    
+
     setFormData({
       type: isIncome ? 'income' : 'expense',
       motif: motifValue,
@@ -197,14 +198,67 @@ export default function Finances() {
   };
 
   const handleDelete = async (id: number | string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette transaction ?')) {
-      try {
-        await paymentService.deletePayment(id.toString());
-        fetchPayments();
-      } catch (error) {
-        console.error('Error deleting payment:', error);
+    // Find the payment to check its date
+    const payment: Payment = await paymentService.getbyId(id);
+    if (!payment) return;
+
+    // Parse the payment date
+    const parsePaymentDate = (dateStr: string): Date => {
+      if (!dateStr) return new Date();
+      // If date is in DD/MM/YYYY format
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/');
+        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       }
+      // If date is in ISO format
+      return new Date(dateStr);
+    };
+
+    const paymentDate  = parsePaymentDate(payment.date);
+    const currentDate = new Date();
+    const daysDifference = Math.floor((currentDate.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Check if the transaction is older than 3 days
+    if (daysDifference < 3) {
+      Swal.fire({
+        title: "Suppression non autorisée",
+        text: "Les transactions de moins de 3 jours ne peuvent pas être supprimées.",
+        icon: "warning",
+        confirmButtonColor: "#3085d6",
+        confirmButtonText: "Compris"
+      });
+      return;
     }
+
+    // Proceed with deletion if older than 3 days
+    Swal.fire({
+      title: "Etes vous sur?",
+      text: "Toute transaction supprimée reste supprimée!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirmer",
+      cancelButtonText: "Annuler"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await paymentService.deletePayment(id.toString());
+          fetchPayments();
+          Swal.fire({
+            title: "Transaction supprimée!",
+            icon: "success"
+          });
+        } catch (error) {
+          console.error('Error deleting payment:', error);
+          Swal.fire({
+            title: "Erreur",
+            text: "Une erreur s'est produite lors de la suppression.",
+            icon: "error"
+          });
+        }
+      }
+    });
   };
 
   const resetForm = () => {
@@ -227,12 +281,12 @@ export default function Finances() {
   // Highlight search keyword in text
   const highlightText = (text: string, keyword: string): React.ReactNode => {
     if (!keyword || !text) return text;
-    
+
     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escapedKeyword})`, 'gi');
     const parts = text.split(regex);
     const keywordLower = keyword.toLowerCase();
-    
+
     return parts.map((part, index) => {
       // Parts that match the regex will be exactly the keyword (case-insensitive)
       if (part.toLowerCase() === keywordLower) {
@@ -249,22 +303,22 @@ export default function Finances() {
   // Calculate totals based on income/expense determination
   const totalIncome = payments.reduce((sum, p) => {
     const paymentType = p.type?.toLowerCase() || '';
-    const isIncome = (paymentType.includes('revenus') || 
-                     paymentType.includes('revenu') ||
-                     paymentType === 'inscription' ||
-                     paymentType === 'mensualite' ||
-                     paymentType === 'trimestre') &&
-                     paymentType !== 'salaire';
+    const isIncome = (paymentType.includes('revenus') ||
+      paymentType.includes('revenu') ||
+      paymentType === 'inscription' ||
+      paymentType === 'mensualite' ||
+      paymentType === 'trimestre') &&
+      paymentType !== 'salaire';
     return isIncome ? sum + Number(p.somme || 0) : sum;
   }, 0);
 
   const totalExpenses = payments.reduce((sum, p) => {
     const paymentType = p.type?.toLowerCase() || '';
-    const isExpense = paymentType.includes('dépenses') || 
-                     paymentType.includes('depenses') ||
-                     paymentType.includes('dépense') ||
-                     paymentType.includes('depense') ||
-                     paymentType === 'salaire';
+    const isExpense = paymentType.includes('dépenses') ||
+      paymentType.includes('depenses') ||
+      paymentType.includes('dépense') ||
+      paymentType.includes('depense') ||
+      paymentType === 'salaire';
     return isExpense ? sum + Number(p.somme || 0) : sum;
   }, 0);
 
@@ -323,9 +377,8 @@ export default function Finances() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center gap-4 mb-2">
             <div
-              className={`${
-                balance >= 0 ? 'bg-emerald-100' : 'bg-red-100'
-              } p-3 rounded-lg`}
+              className={`${balance >= 0 ? 'bg-emerald-100' : 'bg-red-100'
+                } p-3 rounded-lg`}
             >
               <TrendingUp
                 className={balance >= 0 ? 'text-emerald-600' : 'text-red-600'}
@@ -357,31 +410,28 @@ export default function Finances() {
           <div className="flex gap-2">
             <button
               onClick={() => setFilterType('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterType === 'all'
+              className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'all'
                   ? 'bg-emerald-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Tout
             </button>
             <button
               onClick={() => setFilterType('income')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterType === 'income'
+              className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'income'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Revenus
             </button>
             <button
               onClick={() => setFilterType('expense')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterType === 'expense'
+              className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'expense'
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Dépenses
             </button>
@@ -426,17 +476,17 @@ export default function Finances() {
             <tbody className="divide-y divide-gray-200">
               {filteredPayments.map((payment) => {
                 const paymentType = payment.type?.toLowerCase() || '';
-                const isExpense = paymentType.includes('dépenses') || 
-                                 paymentType.includes('depenses') ||
-                                 paymentType.includes('dépense') ||
-                                 paymentType.includes('depense') ||
-                                 paymentType === 'salaire';
-                const isIncome = !isExpense && (paymentType.includes('revenus') || 
-                                 paymentType.includes('revenu') ||
-                                 paymentType === 'inscription' ||
-                                 paymentType === 'mensualite' ||
-                                 paymentType === 'trimestre');
-                
+                const isExpense = paymentType.includes('dépenses') ||
+                  paymentType.includes('depenses') ||
+                  paymentType.includes('dépense') ||
+                  paymentType.includes('depense') ||
+                  paymentType === 'salaire';
+                const isIncome = !isExpense && (paymentType.includes('revenus') ||
+                  paymentType.includes('revenu') ||
+                  paymentType === 'inscription' ||
+                  paymentType === 'mensualite' ||
+                  paymentType === 'trimestre');
+
                 // Parse date - handle both DD/MM/YYYY format and ISO format
                 const formatDate = (dateStr: string) => {
                   if (!dateStr) return 'N/A';
@@ -459,54 +509,52 @@ export default function Finances() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          isIncome
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${isIncome
                             ? 'bg-green-100 text-green-800'
                             : isExpense
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
                       >
                         {isIncome ? 'Revenu' : isExpense ? 'Dépense' : 'Autre'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {searchTerm 
+                      {searchTerm
                         ? highlightText(getPaymentTypeLabel(payment.type), searchTerm)
                         : getPaymentTypeLabel(payment.type)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.eleve 
-                        ? (searchTerm 
-                            ? highlightText(`${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`, searchTerm)
-                            : `${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`)
+                      {payment.eleve
+                        ? (searchTerm
+                          ? highlightText(`${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`, searchTerm)
+                          : `${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`)
                         : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.classe?.nom 
-                        ? (searchTerm 
-                            ? highlightText(payment.classe.nom, searchTerm)
-                            : payment.classe.nom)
+                      {payment.classe?.nom
+                        ? (searchTerm
+                          ? highlightText(payment.classe.nom, searchTerm)
+                          : payment.classe.nom)
                         : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.user 
-                        ? (searchTerm 
-                            ? highlightText(`${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`, searchTerm)
-                            : `${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`)
+                      {payment.user
+                        ? (searchTerm
+                          ? highlightText(`${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`, searchTerm)
+                          : `${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`)
                         : '-'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                      {payment.description 
-                        ? (searchTerm 
-                            ? highlightText(payment.description, searchTerm)
-                            : payment.description)
+                      {payment.description
+                        ? (searchTerm
+                          ? highlightText(payment.description, searchTerm)
+                          : payment.description)
                         : '-'}
                     </td>
                     <td
-                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${
-                        isIncome ? 'text-green-600' : isExpense ? 'text-red-600' : 'text-gray-600'
-                      }`}
+                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${isIncome ? 'text-green-600' : isExpense ? 'text-red-600' : 'text-gray-600'
+                        }`}
                     >
                       {isIncome ? '+' : isExpense ? '-' : ''}
                       {Number(payment.somme || 0).toLocaleString('fr-FR')} FCFA
@@ -520,6 +568,7 @@ export default function Finances() {
                       </button>
                       <button
                         onClick={() => handleDelete(payment.id.toString())}
+                        // onClick={()=>alert()}
                         className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 size={18} />
@@ -589,7 +638,7 @@ export default function Finances() {
                       // Automatically set type to expense if salaire is selected
                       const newType = selectedMotif === 'salaire' ? 'expense' : formData.type;
                       // If selecting a predefined option, use it directly; if "autre", keep current custom value or set to "autre"
-                      const motifValue = selectedMotif === 'autre' 
+                      const motifValue = selectedMotif === 'autre'
                         ? (['inscription', 'mensualite', 'trimestre', 'salaire'].includes(formData.motif) ? 'autre' : formData.motif)
                         : selectedMotif;
                       setFormData({ ...formData, motif: motifValue, type: newType });

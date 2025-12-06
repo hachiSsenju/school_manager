@@ -90,7 +90,7 @@ export function StudentsManager() {
     })
     .sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case "name":
           comparison = `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`);
@@ -109,7 +109,7 @@ export function StudentsManager() {
         default:
           comparison = 0;
       }
-      
+
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
@@ -142,16 +142,16 @@ export function StudentsManager() {
 
       // Clear selected students
       setSelectedStudents([]);
-      
+
       // Refresh data
       await fetchSchoolData();
-      
+
       // Close modal
       setShowTransferModal(false);
-      
+
       // Clear any previous errors
       setError("");
-      
+
       // Show success alert with SweetAlert
       Swal.fire({
         icon: "success",
@@ -181,18 +181,18 @@ export function StudentsManager() {
     const prenomPrefix = prenom.substring(0, 2).toUpperCase();
     const birthYear = new Date(birthday).getFullYear().toString().slice(-2);
     const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-    
+
     const baseMatricule = `${nomPrefix}${prenomPrefix}${birthYear}${randomNum}`;
-    
+
     // Check if matricule already exists
     const existingMatricules = schoolStudents.map(s => s.matricule).filter(Boolean);
-    
+
     if (existingMatricules.includes(baseMatricule)) {
       // Add additional random digits if exists
       const extraRandom = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
       return `${baseMatricule}${extraRandom}`;
     }
-    
+
     return baseMatricule;
   };
 
@@ -281,7 +281,7 @@ export function StudentsManager() {
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-sm border p-4 space-y-4">
         {error && <div className="text-sm text-red-600">{error}</div>}
-        
+
         {/* Search Bar */}
         <div className="relative">
           <Search
@@ -396,52 +396,52 @@ export function StudentsManager() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAndSortedStudents.length > 0 ? (
                 filteredAndSortedStudents.map((student) => {
-                return (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300"
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStudents([
-                              ...selectedStudents,
-                              student.id,
-                            ]);
-                          } else {
-                            setSelectedStudents(
-                              selectedStudents.filter((id) => id !== student.id)
-                            );
-                          }
-                        }}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User size={20} className="text-gray-500" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {student.nom} {student.prenom}
+                  return (
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedStudents([
+                                ...selectedStudents,
+                                student.id,
+                              ]);
+                            } else {
+                              setSelectedStudents(
+                                selectedStudents.filter((id) => id !== student.id)
+                              );
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                            <User size={20} className="text-gray-500" />
                           </div>
-                          <div className="text-sm text-gray-500">
-                            Né(e) le{" "}
-                            {new Date(student.birthday).toLocaleDateString(
-                              "fr-FR"
-                            )}
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {student.nom} {student.prenom}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Né(e) le{" "}
+                              {new Date(student.birthday).toLocaleDateString(
+                                "fr-FR"
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
-                        {student.classe.nom}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {/* <div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900">
+                          {student.classe.nom}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {/* <div>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${status.color}`}
                         >
@@ -451,25 +451,25 @@ export function StudentsManager() {
                           {formatCurrency(student.solde_initial)}
                         </div>
                       </div> */}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button 
-                          onClick={() => handleEdit(student)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <Link to={`/students/${student.id}`}>
-                        <button className="text-green-600 hover:text-green-900 p-1 rounded">
-                          <Eye size={16} />
-                        </button>
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEdit(student)}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <Link to={`/students/${student.id}`}>
+                            <button className="text-green-600 hover:text-green-900 p-1 rounded">
+                              <Eye size={16} />
+                            </button>
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
@@ -530,6 +530,7 @@ export function StudentsManager() {
                     type="date"
                     name="dateOfBirth"
                     defaultValue={editingStudent?.birthday ? new Date(editingStudent.birthday).toISOString().split('T')[0] : ""}
+                    max={new Date().toISOString().split('T')[0]}
                     required
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -579,7 +580,7 @@ export function StudentsManager() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Numéro parent (optionnel)
