@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { paymentService } from '../services/paymentService';
 import { EcoleService } from '../services/ecoleServices';
 import { SessionServices } from '../services/sessionServices';
-import { Plus, Search, Edit, Trash2, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { HistoryServices } from '../services/histotyService';
+import { Plus, Search, Edit, Trash2, X, TrendingUp, TrendingDown, History as HistoryIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { Ecole, Student, Classe, Prof } from '../types';
 import Swal from 'sweetalert2';
 
@@ -37,6 +38,17 @@ interface Payment {
   };
 }
 
+interface HistoryRecord {
+  id: number;
+  value: any;
+  prevValue: any;
+  entity: string;
+  action: 'create' | 'delete' | 'transfert' | 'update';
+  ecole: string;
+  utilisateur: string;
+  date: string;
+}
+
 export default function Finances() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [school, setSchool] = useState<Ecole | null>(null);
@@ -56,9 +68,15 @@ export default function Finances() {
     prof_id: '',
   });
 
+  // History state
+  const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
+  const [expandedHistoryRows, setExpandedHistoryRows] = useState<Set<number>>(new Set());
+  const [showHistory, setShowHistory] = useState(false);
+
   useEffect(() => {
     fetchPayments();
     fetchSchool();
+    fetchHistory();
   }, []);
 
   useEffect(() => {
@@ -120,6 +138,22 @@ export default function Finances() {
     }
   };
 
+  const fetchHistory = async () => {
+    try {
+      const schoolId = SessionServices.getSchoolId();
+      if (schoolId) {
+        const data = await HistoryServices.getAllByEcoleId(schoolId);
+        // Filter for payment records
+        const paymentHistory = (data || []).filter((record: HistoryRecord) =>
+          record.entity.toLowerCase() === 'payment'
+        );
+        setHistoryRecords(paymentHistory);
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -145,6 +179,7 @@ export default function Finances() {
       setEditingPayment(null);
       resetForm();
       fetchPayments();
+      fetchHistory(); // Refresh history after action
     } catch (error) {
       console.error('Error saving payment:', error);
     }
@@ -214,12 +249,12 @@ export default function Finances() {
       return new Date(dateStr);
     };
 
-    const paymentDate  = parsePaymentDate(payment.date);
+    const paymentDate = parsePaymentDate(payment.date);
     const currentDate = new Date();
     const daysDifference = Math.floor((currentDate.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // Check if the transaction is older than 3 days
-    if (daysDifference < 3) {
+    if (daysDifference < 1) {
       Swal.fire({
         title: "Suppression non autorisée",
         text: "Les transactions de moins de 3 jours ne peuvent pas être supprimées.",
@@ -245,6 +280,7 @@ export default function Finances() {
         try {
           await paymentService.deletePayment(id.toString());
           fetchPayments();
+          fetchHistory(); // Refresh history
           Swal.fire({
             title: "Transaction supprimée!",
             icon: "success"
@@ -328,21 +364,70 @@ export default function Finances() {
   const schoolClasses = school?.classes || [];
   const schoolProfs = school?.professeurs || [];
 
+  const toggleHistoryRow = (id: number) => {
+    const newExpanded = new Set(expandedHistoryRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedHistoryRows(newExpanded);
+  };
+
+  const getActionLabel = (action: string) => {
+    const map: { [key: string]: string } = {
+      'create': 'Création',
+      'delete': 'Suppression',
+      'update': 'Modification',
+      'transfert': 'Transfert'
+    };
+    return map[action] || action;
+  };
+
+  const getActionColor = (action: string) => {
+    const map: { [key: string]: string } = {
+      'create': 'bg-green-100 text-green-800',
+      'delete': 'bg-red-100 text-red-800',
+      'update': 'bg-blue-100 text-blue-800',
+      'transfert': 'bg-yellow-100 text-yellow-800'
+    };
+    return map[action] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    try {
+      return new Date(dateStr).toLocaleString('fr-FR');
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Finances</h1>
-        <button
-          onClick={() => {
-            setEditingPayment(null);
-            resetForm();
-            setShowModal(true);
-          }}
-          className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors"
-        >
-          <Plus size={20} />
-          Ajouter une transaction
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${showHistory ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+          >
+            <HistoryIcon size={20} />
+            {showHistory ? 'Masquer historique' : 'Voir historique'}
+          </button>
+          <button
+            onClick={() => {
+              setEditingPayment(null);
+              resetForm();
+              setShowModal(true);
+            }}
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors"
+          >
+            <Plus size={20} />
+            Ajouter une transaction
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -395,195 +480,297 @@ export default function Finances() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Rechercher une transaction..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            />
+      {showHistory ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <HistoryIcon size={24} className="text-blue-600" />
+              Historique des modifications
+            </h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilterType('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'all'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-            >
-              Tout
-            </button>
-            <button
-              onClick={() => setFilterType('income')}
-              className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'income'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-            >
-              Revenus
-            </button>
-            <button
-              onClick={() => setFilterType('expense')}
-              className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'expense'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-            >
-              Dépenses
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Motif de payment
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Élève
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Classe
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Utilisateur
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Montant
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredPayments.map((payment) => {
-                const paymentType = payment.type?.toLowerCase() || '';
-                const isExpense = paymentType.includes('dépenses') ||
-                  paymentType.includes('depenses') ||
-                  paymentType.includes('dépense') ||
-                  paymentType.includes('depense') ||
-                  paymentType === 'salaire';
-                const isIncome = !isExpense && (paymentType.includes('revenus') ||
-                  paymentType.includes('revenu') ||
-                  paymentType === 'inscription' ||
-                  paymentType === 'mensualite' ||
-                  paymentType === 'trimestre');
-
-                // Parse date - handle both DD/MM/YYYY format and ISO format
-                const formatDate = (dateStr: string) => {
-                  if (!dateStr) return 'N/A';
-                  // If date is in DD/MM/YYYY format
-                  if (dateStr.includes('/')) {
-                    return dateStr;
-                  }
-                  // If date is in ISO format
-                  try {
-                    return new Date(dateStr).toLocaleDateString('fr-FR');
-                  } catch {
-                    return dateStr;
-                  }
-                };
-
-                return (
-                  <tr key={payment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(payment.date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${isIncome
-                            ? 'bg-green-100 text-green-800'
-                            : isExpense
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                      >
-                        {isIncome ? 'Revenu' : isExpense ? 'Dépense' : 'Autre'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {searchTerm
-                        ? highlightText(getPaymentTypeLabel(payment.type), searchTerm)
-                        : getPaymentTypeLabel(payment.type)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.eleve
-                        ? (searchTerm
-                          ? highlightText(`${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`, searchTerm)
-                          : `${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`)
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.classe?.nom
-                        ? (searchTerm
-                          ? highlightText(payment.classe.nom, searchTerm)
-                          : payment.classe.nom)
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.user
-                        ? (searchTerm
-                          ? highlightText(`${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`, searchTerm)
-                          : `${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`)
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                      {payment.description
-                        ? (searchTerm
-                          ? highlightText(payment.description, searchTerm)
-                          : payment.description)
-                        : '-'}
-                    </td>
-                    <td
-                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${isIncome ? 'text-green-600' : isExpense ? 'text-red-600' : 'text-gray-600'
-                        }`}
-                    >
-                      {isIncome ? '+' : isExpense ? '-' : ''}
-                      {Number(payment.somme || 0).toLocaleString('fr-FR')} FCFA
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(payment)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(payment.id.toString())}
-                        // onClick={()=>alert()}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10"></th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Détails</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {historyRecords.length > 0 ? (
+                  historyRecords.map((record) => {
+                    const isExpanded = expandedHistoryRows.has(record.id);
+                    const data = record.value || record.prevValue;
+                    return (
+                      <>
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => toggleHistoryRow(record.id)}
+                              className="text-gray-400 hover:text-gray-600"
+                            >
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDate(record.date)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActionColor(record.action)}`}>
+                              {getActionLabel(record.action)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {record.utilisateur}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {data?.description || data?.motif || '-'}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="bg-gray-50">
+                            <td colSpan={5} className="px-6 py-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {record.prevValue && Object.keys(record.prevValue).length > 0 && (
+                                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <h4 className="font-semibold text-red-800 mb-2">Valeur précédente</h4>
+                                    <dl className="space-y-1 text-sm">
+                                      <div><dt className="inline font-medium">Montant:</dt> <dd className="inline">{record.prevValue.somme} FCFA</dd></div>
+                                      <div><dt className="inline font-medium">Motif:</dt> <dd className="inline">{record.prevValue.motif}</dd></div>
+                                      <div><dt className="inline font-medium">Description:</dt> <dd className="inline">{record.prevValue.description}</dd></div>
+                                      {record.prevValue.eleve && (
+                                        <div><dt className="inline font-medium">Élève:</dt> <dd className="inline">{record.prevValue.eleve.nom} {record.prevValue.eleve.prenom}</dd></div>
+                                      )}
+                                    </dl>
+                                  </div>
+                                )}
+                                {record.value && Object.keys(record.value).length > 0 && (
+                                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <h4 className="font-semibold text-green-800 mb-2">Valeur actuelle</h4>
+                                    <dl className="space-y-1 text-sm">
+                                      <div><dt className="inline font-medium">Montant:</dt> <dd className="inline">{record.value.somme} FCFA</dd></div>
+                                      <div><dt className="inline font-medium">Motif:</dt> <dd className="inline">{record.value.motif}</dd></div>
+                                      <div><dt className="inline font-medium">Description:</dt> <dd className="inline">{record.value.description}</dd></div>
+                                      {record.value.eleve && (
+                                        <div><dt className="inline font-medium">Élève:</dt> <dd className="inline">{record.value.eleve.nom} {record.value.eleve.prenom}</dd></div>
+                                      )}
+                                    </dl>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      Aucun historique disponible
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {filteredPayments.length === 0 && (
-            <div className="text-center py-12 text-gray-500">Aucune transaction trouvée</div>
-          )}
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Rechercher une transaction..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFilterType('all')}
+                  className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'all'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  Tout
+                </button>
+                <button
+                  onClick={() => setFilterType('income')}
+                  className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'income'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  Revenus
+                </button>
+                <button
+                  onClick={() => setFilterType('expense')}
+                  className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'expense'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  Dépenses
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Motif de payment
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Élève
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Classe
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Utilisateur
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Montant
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredPayments.map((payment) => {
+                    const paymentType = payment.type?.toLowerCase() || '';
+                    const isExpense = paymentType.includes('dépenses') ||
+                      paymentType.includes('depenses') ||
+                      paymentType.includes('dépense') ||
+                      paymentType.includes('depense') ||
+                      paymentType === 'salaire';
+                    const isIncome = !isExpense && (paymentType.includes('revenus') ||
+                      paymentType.includes('revenu') ||
+                      paymentType === 'inscription' ||
+                      paymentType === 'mensualite' ||
+                      paymentType === 'trimestre');
+
+                    // Parse date - handle both DD/MM/YYYY format and ISO format
+                    const formatDate = (dateStr: string) => {
+                      if (!dateStr) return 'N/A';
+                      // If date is in DD/MM/YYYY format
+                      if (dateStr.includes('/')) {
+                        return dateStr;
+                      }
+                      // If date is in ISO format
+                      try {
+                        return new Date(dateStr).toLocaleDateString('fr-FR');
+                      } catch {
+                        return dateStr;
+                      }
+                    };
+
+                    return (
+                      <tr key={payment.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDate(payment.date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${isIncome
+                              ? 'bg-green-100 text-green-800'
+                              : isExpense
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                              }`}
+                          >
+                            {isIncome ? 'Revenu' : isExpense ? 'Dépense' : 'Autre'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {searchTerm
+                            ? highlightText(getPaymentTypeLabel(payment.type), searchTerm)
+                            : getPaymentTypeLabel(payment.type)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {payment.eleve
+                            ? (searchTerm
+                              ? highlightText(`${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`, searchTerm)
+                              : `${payment.eleve.nom}${payment.eleve.prenom ? ' ' + payment.eleve.prenom : ''}`)
+                            : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {payment.classe?.nom
+                            ? (searchTerm
+                              ? highlightText(payment.classe.nom, searchTerm)
+                              : payment.classe.nom)
+                            : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {payment.user
+                            ? (searchTerm
+                              ? highlightText(`${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`, searchTerm)
+                              : `${payment.user.nom}${payment.user.prenom ? ' ' + payment.user.prenom : ''}`)
+                            : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                          {payment.description
+                            ? (searchTerm
+                              ? highlightText(payment.description, searchTerm)
+                              : payment.description)
+                            : '-'}
+                        </td>
+                        <td
+                          className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${isIncome ? 'text-green-600' : isExpense ? 'text-red-600' : 'text-gray-600'
+                            }`}
+                        >
+                          {isIncome ? '+' : isExpense ? '-' : ''}
+                          {Number(payment.somme || 0).toLocaleString('fr-FR')} FCFA
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(payment)}
+                            className="text-blue-600 hover:text-blue-900 mr-4"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(payment.id.toString())}
+                            // onClick={()=>alert()}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filteredPayments.length === 0 && (
+                <div className="text-center py-12 text-gray-500">Aucune transaction trouvée</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

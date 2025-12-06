@@ -1,6 +1,6 @@
 import axios from "axios";
-// const API_BASE_URL = "https://schoolmanager.gerexatlas.com/";
-const API_BASE_URL = "http://localhost:8000/";
+const API_BASE_URL = "https://schoolmanager.gerexatlas.com/";
+// const API_BASE_URL = "http://localhost:8000/";
 export const api =
   typeof window !== "undefined" && sessionStorage
     ? axios.create({
