@@ -48,7 +48,7 @@ export function StudentDetails() {
       setLoading(true);
       const [eleveData, classesData, currentClasse] = await Promise.all([
         EleveService.getById(studentId),
-        ClasseService.getAllClasses(),
+        ClasseService.getAllClassesByUid(),
         EleveService.getClasseByStudentId(studentId),
       ]);
       setStudent(eleveData);

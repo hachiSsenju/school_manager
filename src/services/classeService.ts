@@ -5,6 +5,11 @@ export const ClasseService = {
         const response = await api.get("/api/classes");
         return response.data;
     },
+    getAllClassesByUid: async () => {
+        const $uid = sessionStorage.getItem("id");
+        const response = await api.get(`/api/classes/${$uid}`);
+        return response.data;
+    },
     getById: async (id: number) => {
         const response = await api.get(`api/classes/${id}`);
         return response.data;

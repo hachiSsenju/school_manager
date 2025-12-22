@@ -42,7 +42,7 @@ export function ClassManager() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"name" | "niveau" | "students" | "frais">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-
+  const [openResponsables, setOpenResponsables] = useState(false);
   const schoolId = SessionServices.getSchoolId();
 
   // Centralized fetch function
@@ -201,7 +201,7 @@ export function ClassManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 " >
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Gestion des Classes</h1>
         <button
@@ -412,132 +412,165 @@ export function ClassManager() {
 
       {/* Add/Edit Class Form Modal */}
       {showAddClassForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium mb-4">
-              {isEditMode ? "Modifier la Classe" : "Nouvelle Classe"}
-            </h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddClass(new FormData(e.target as HTMLFormElement));
-              }}
-              onChange={(e) => {
-                const target = e.target as HTMLSelectElement;
-                if (target.name === "level") {
-                  setSelectedNiveau(target.value);
-                }
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom de la classe
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    defaultValue={editingClass?.nom || ""}
-                    placeholder="Ex: 6ème A, CM2 B..."
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Niveau
-                  </label>
-                  <select
-                    name="level"
-                    required
-                    defaultValue={editingClass?.niveau || ""}
-                    onChange={(e) => setSelectedNiveau(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Sélectionner un niveau</option>
-                    <option value="maternelle">Maternelle</option>
-                    <option value="primaire">1er Cycle</option>
-                    <option value="college">2ème Cycle</option>
-                    <option value="lycee">Lycée</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Frais annuels (F CFA)
-                  </label>
-                  <input
-                    type="number"
-                    name="baseFee"
-                    required
-                    defaultValue={editingClass?.frais || ""}
-                    placeholder="150000"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                {/* Responsables selection - only for primaire and maternelle */}
-                {(selectedNiveau === "primaire" || selectedNiveau === "maternelle" || editingClass?.niveau === "primaire" || editingClass?.niveau === "maternelle") && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+              <h3 className="text-lg font-medium mb-4">
+                {isEditMode ? "Modifier la Classe" : "Nouvelle Classe"}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddClass(new FormData(e.target as HTMLFormElement));
+                }}
+                onChange={(e) => {
+                  const target = e.target as HTMLSelectElement;
+                  if (target.name === "level") {
+                    setSelectedNiveau(target.value);
+                  }
+                }}
+              >
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Professeurs responsables (optionnel)
+                      Nom de la classe
                     </label>
-                    <div className="border border-gray-300 rounded-lg p-3 max-h-64 overflow-y-auto bg-gray-50">
-                      {schoolTeachers.length > 0 ? (
-                        <div className="space-y-2">
-                          {schoolTeachers.map((teacher : Prof) => {
-                            const isChecked = selectedResponsables.includes(teacher.id);
-                            return (
-                              <label 
-                                key={teacher.id}
-                                className="flex items-center p-2 hover:bg-white rounded cursor-pointer transition-colors"
-                              >
-                                <input
-                                  type="checkbox"
-                                  name="responsables"
-                                  value={teacher.id}
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedResponsables([...selectedResponsables, teacher.id]);
-                                    } else {
-                                      setSelectedResponsables(selectedResponsables.filter(id => id !== teacher.id));
-                                    }
-                                  }}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
-                                />
-                                <span className="ml-3 text-sm text-gray-700">
-                                  {teacher.nom} {teacher.prenom}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 text-center py-4">
-                          Aucun professeur disponible
-                        </p>
-                      )}
-                    </div>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      defaultValue={editingClass?.nom || ""}
+                      placeholder="Ex: 6ème A, CM2 B..."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
-                )}
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Niveau
+                    </label>
+                    <select
+                      name="level"
+                      required
+                      defaultValue={editingClass?.niveau || ""}
+                      onChange={(e) => setSelectedNiveau(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Sélectionner un niveau</option>
+                      <option value="maternelle">Maternelle</option>
+                      <option value="primaire">1er Cycle</option>
+                      <option value="college">2ème Cycle</option>
+                      <option value="lycee">Lycée</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Frais annuels (F CFA)
+                    </label>
+                    <input
+                      type="number"
+                      name="baseFee"
+                      required
+                      defaultValue={editingClass?.frais || ""}
+                      placeholder="150000"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  {/* Responsables selection - only for primaire and maternelle */}
+                {(selectedNiveau === "primaire" ||
+  selectedNiveau === "maternelle" ||
+  editingClass?.niveau === "primaire" ||
+  editingClass?.niveau === "maternelle") && (
+  <div className="relative">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Professeurs responsables (optionnel)
+    </label>
+
+    {/* Dropdown trigger */}
+    <button
+      type="button"
+      onClick={() => setOpenResponsables(!openResponsables)}
+      className="w-full flex justify-between items-center border border-gray-300 rounded-lg px-3 py-2 bg-white hover:bg-gray-50"
+    >
+      <span className="text-sm text-gray-700">
+        {selectedResponsables.length > 0
+          ? `${selectedResponsables.length} sélectionné(s)`
+          : "Sélectionner des professeurs"}
+      </span>
+      <svg
+        className={`w-4 h-4 transition-transform ${
+          openResponsables ? "rotate-180" : ""
+        }`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+
+    {/* Dropdown content */}
+    {openResponsables && (
+      <div className="absolute z-40 mt-2 w-full border border-gray-300 rounded-lg bg-white shadow-lg max-h-64 overflow-y-auto">
+        {schoolTeachers.length > 0 ? (
+          <div className="p-2 space-y-1">
+            {schoolTeachers.map((teacher: Prof) => {
+              const isChecked = selectedResponsables.includes(teacher.id);
+              return (
+                <label
+                  key={teacher.id}
+                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
                 >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  {isEditMode ? "Enregistrer les modifications" : "Créer la classe"}
-                </button>
-              </div>
-            </form>
+                  <input
+                    type="checkbox"
+                    name="responsables"
+                    value={teacher.id}
+                    checked={isChecked}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedResponsables([...selectedResponsables, teacher.id]);
+                      } else {
+                        setSelectedResponsables(
+                          selectedResponsables.filter((id) => id !== teacher.id)
+                        );
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-3 text-sm text-gray-700">
+                    {teacher.nom} {teacher.prenom}
+                  </span>
+                </label>
+              );
+            })}
           </div>
-        </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-4">
+            Aucun professeur disponible
+          </p>
+        )}
+      </div>
+    )}
+  </div>
+)}
+
+                </div>
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    {isEditMode ? "Enregistrer les modifications" : "Créer la classe"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
       )}
 
       {/* Add Subject Form Modal */}
