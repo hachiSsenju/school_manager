@@ -3,11 +3,12 @@ import {
   Plus,
   Users,
   BookOpen,
-  CreditCard as Edit,
+  Pencil as Edit,
   GraduationCap,
   Search,
   Filter,
   ArrowUpDown,
+  Trash,
 } from "lucide-react";
 import { Matiere, Ecole } from "../types"
 import { ClasseService } from "../services/classeService";
@@ -15,6 +16,7 @@ import { MatiereService } from "../services/matiereService";
 import { EcoleService } from "../services/ecoleServices";
 import { Classe, Prof } from "../types";
 import { SessionServices } from "../services/sessionServices";
+import Swal from 'sweetalert2';
 
 // Helper function to convert niveau code to display name
 const getNiveauDisplayName = (niveau: string): string => {
@@ -43,6 +45,7 @@ export function ClassManager() {
   const [sortBy, setSortBy] = useState<"name" | "niveau" | "students" | "frais">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [openResponsables, setOpenResponsables] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const schoolId = SessionServices.getSchoolId();
 
   // Centralized fetch function
@@ -86,7 +89,7 @@ export function ClassManager() {
     })
     .sort((a: Classe, b: Classe) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case "name":
           comparison = a.nom.localeCompare(b.nom);
@@ -103,17 +106,18 @@ export function ClassManager() {
         default:
           comparison = 0;
       }
-      
+
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
   const handleAddClass = async (formData: FormData) => {
+    setIsSubmitting(true);
     try {
       const niveau = formData.get("level") as string;
-      const responsablesFormData = selectedResponsables.length > 0 
-        ? selectedResponsables 
+      const responsablesFormData = selectedResponsables.length > 0
+        ? selectedResponsables
         : (formData.getAll("responsables") as string[]);
-      
+
       // Check if we're in edit mode
       if (isEditMode && editingClass) {
         // Update existing class
@@ -142,9 +146,31 @@ export function ClassManager() {
       setEditingClass(null);
       setSelectedNiveau("");
       setSelectedResponsables([]);
+
+      Swal.fire({
+        icon: 'success',
+        title: isEditMode ? 'Classe modifiée !' : 'Classe ajoutée !',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
     } catch (err) {
       console.error("Erreur lors de la création/modification de la classe:", err);
-      setError(isEditMode ? "Modification de la classe échouée." : "Création de la classe échouée.");
+      // setError(isEditMode ? "Modification de la classe échouée." : "Création de la classe échouée.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: isEditMode ? "Modification échouée." : "Création échouée.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -158,7 +184,42 @@ export function ClassManager() {
     setIsEditMode(true);
     setShowAddClassForm(true);
   };
-
+const handleDelete = (id:any)=>{
+  Swal.fire({
+    text: 'Voulez vous vraiment désactiver la classe ?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmer',
+    cancelButtonText: 'Annuler',
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        // id may be an object (classItem) or a raw id
+        await ClasseService.toggleActive(id);
+        fetchSchoolData();
+        Swal.fire({
+          icon: 'success',
+          title: 'Classe désactivée !',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+        });
+      } catch (err) {
+        console.error('Erreur lors de la désactivation de la classe :', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: "Impossible de désactiver la classe.",
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 4000,
+        });
+      }
+    }
+  });
+}
   const handleCloseForm = () => {
     setShowAddClassForm(false);
     setIsEditMode(false);
@@ -168,6 +229,7 @@ export function ClassManager() {
   };
 
   const handleAddSubject = async (formData: FormData) => {
+    setIsSubmitting(true);
     try {
       const payload = {
         nom: formData.get("name") as string,
@@ -182,9 +244,31 @@ export function ClassManager() {
 
       setShowAddSubjectForm(false);
       setSelectedClassId("");
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Matière ajoutée !',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
     } catch (err) {
       console.error("Erreur lors de l'ajout de la matière:", err);
-      setError("Ajout de la matière échoué.");
+      // setError("Ajout de la matière échoué.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Ajout de la matière échoué.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -282,126 +366,132 @@ export function ClassManager() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredAndSortedClasses.length > 0 ? (
-          filteredAndSortedClasses.map((classItem : Classe) => {
-          return (
-            <div
-              key={classItem.id}
-              className="bg-white rounded-lg shadow-sm border overflow-hidden"
-            >
-              <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <GraduationCap size={24} className="text-blue-600" />
+          filteredAndSortedClasses.map((classItem: Classe) => {
+            return (
+              <div
+                key={classItem.id}
+                className="bg-white rounded-lg shadow-sm border overflow-hidden"
+              >
+                <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <GraduationCap size={24} className="text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {classItem.nom}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Niveau: {getNiveauDisplayName(classItem.niveau)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {classItem.nom}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Niveau: {getNiveauDisplayName(classItem.niveau)}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEdit(classItem)}
+                        className="p-2 text-gray-400 hover:text-blue-600 rounded-lg"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(classItem.id)}
+                        className="p-2 text-gray-400 hover:text-blue-600 rounded-lg"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-center mb-2">
+                        <Users size={20} className="text-blue-600" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {classItem.eleves?.length ?? 0}
                       </p>
+                      <p className="text-sm text-gray-600">Élèves inscrits</p>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-center mb-2">
+                        <BookOpen size={20} className="text-green-600" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {classItem.matieres?.length ?? 0}
+                      </p>
+                      <p className="text-sm text-gray-600">Matières</p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Frais de base:</span>
+                      <span className="font-medium">
+                        {Number(classItem.frais).toLocaleString()} F CFA
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t space-y-2">
                     <button
-                      onClick={() => handleEdit(classItem)}
-                      className="p-2 text-gray-400 hover:text-blue-600 rounded-lg"
+                      onClick={() => {
+                        window.location.href = `classes/${classItem.id}`
+                      }}
+                      className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
                     >
-                      <Edit size={16} />
+                      Détails classe
                     </button>
-                  </div>
-                </div>
-              </div>
 
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-center mb-2">
-                      <Users size={20} className="text-blue-600" />
-                    </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {classItem.eleves?.length ?? 0}
-                    </p>
-                    <p className="text-sm text-gray-600">Élèves inscrits</p>
+                    {/* Display Responsables for primaire and maternelle */}
+                    {(classItem.niveau === "primaire" || classItem.niveau === "maternelle") && classItem.responsables && classItem.responsables.length > 0 && (
+                      <div className="pt-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Professeurs Responsables:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {classItem.responsables.map((prof) => (
+                            <span
+                              key={prof.id}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200"
+                            >
+                              {prof.nom} {prof.prenom}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-center mb-2">
-                      <BookOpen size={20} className="text-green-600" />
-                    </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {classItem.matieres?.length ?? 0}
-                    </p>
-                    <p className="text-sm text-gray-600">Matières</p>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Frais de base:</span>
-                    <span className="font-medium">
-                      {Number(classItem.frais).toLocaleString()} F CFA
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t space-y-2">
-                  <button
-                    onClick={() => {
-                      window.location.href=`classes/${classItem.id}`
-                    }}
-                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
-                  >
-                    Détails classe
-                  </button>
-                  
-                  {/* Display Responsables for primaire and maternelle */}
-                  {(classItem.niveau === "primaire" || classItem.niveau === "maternelle") && classItem.responsables && classItem.responsables.length > 0 && (
-                    <div className="pt-2">
-                      <p className="text-xs font-medium text-gray-700 mb-1">Professeurs Responsables:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {classItem.responsables.map((prof) => (
-                          <span
-                            key={prof.id}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200"
+                  {classItem.matieres && classItem.matieres.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Matières enseignées:
+                      </h4>
+                      <div className="space-y-1">
+                        {classItem.matieres.slice(0, 3).map((matiere: Matiere) => (
+                          <div
+                            key={matiere.id}
+                            className="flex justify-between text-sm"
                           >
-                            {prof.nom} {prof.prenom}
-                          </span>
+                            <span className="text-gray-600">{matiere.nom}</span>
+                            <span className="text-gray-500">
+                              Coef. {matiere.coefficient}
+                            </span>
+                          </div>
                         ))}
+                        {classItem.matieres.length > 3 && (
+                          <p className="text-xs text-gray-500">
+                            +{classItem.matieres.length - 3} autres matières
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
-
-                {classItem.matieres && classItem.matieres.length > 0 && (
-                  <div className="pt-4 border-t">
-                    <h4 className="font-medium text-gray-900 mb-2">
-                      Matières enseignées:
-                    </h4>
-                    <div className="space-y-1">
-                      {classItem.matieres.slice(0, 3).map((matiere: Matiere) => (
-                        <div
-                          key={matiere.id}
-                          className="flex justify-between text-sm"
-                        >
-                          <span className="text-gray-600">{matiere.nom}</span>
-                          <span className="text-gray-500">
-                            Coef. {matiere.coefficient}
-                          </span>
-                        </div>
-                      ))}
-                      {classItem.matieres.length > 3 && (
-                        <p className="text-xs text-gray-500">
-                          +{classItem.matieres.length - 3} autres matières
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
-          );
-        })
+            );
+          })
         ) : (
           <div className="col-span-full text-center py-12 text-gray-500">
             <GraduationCap size={48} className="mx-auto text-gray-400 mb-3" />
@@ -412,165 +502,175 @@ export function ClassManager() {
 
       {/* Add/Edit Class Form Modal */}
       {showAddClassForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <h3 className="text-lg font-medium mb-4">
-                {isEditMode ? "Modifier la Classe" : "Nouvelle Classe"}
-              </h3>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddClass(new FormData(e.target as HTMLFormElement));
-                }}
-                onChange={(e) => {
-                  const target = e.target as HTMLSelectElement;
-                  if (target.name === "level") {
-                    setSelectedNiveau(target.value);
-                  }
-                }}
-              >
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nom de la classe
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      defaultValue={editingClass?.nom || ""}
-                      placeholder="Ex: 6ème A, CM2 B..."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Niveau
-                    </label>
-                    <select
-                      name="level"
-                      required
-                      defaultValue={editingClass?.niveau || ""}
-                      onChange={(e) => setSelectedNiveau(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Sélectionner un niveau</option>
-                      <option value="maternelle">Maternelle</option>
-                      <option value="primaire">1er Cycle</option>
-                      <option value="college">2ème Cycle</option>
-                      <option value="lycee">Lycée</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Frais annuels (F CFA)
-                    </label>
-                    <input
-                      type="number"
-                      name="baseFee"
-                      required
-                      defaultValue={editingClass?.frais || ""}
-                      placeholder="150000"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  {/* Responsables selection - only for primaire and maternelle */}
-                {(selectedNiveau === "primaire" ||
-  selectedNiveau === "maternelle" ||
-  editingClass?.niveau === "primaire" ||
-  editingClass?.niveau === "maternelle") && (
-  <div className="relative">
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-      Professeurs responsables (optionnel)
-    </label>
-
-    {/* Dropdown trigger */}
-    <button
-      type="button"
-      onClick={() => setOpenResponsables(!openResponsables)}
-      className="w-full flex justify-between items-center border border-gray-300 rounded-lg px-3 py-2 bg-white hover:bg-gray-50"
-    >
-      <span className="text-sm text-gray-700">
-        {selectedResponsables.length > 0
-          ? `${selectedResponsables.length} sélectionné(s)`
-          : "Sélectionner des professeurs"}
-      </span>
-      <svg
-        className={`w-4 h-4 transition-transform ${
-          openResponsables ? "rotate-180" : ""
-        }`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
-
-    {/* Dropdown content */}
-    {openResponsables && (
-      <div className="absolute z-40 mt-2 w-full border border-gray-300 rounded-lg bg-white shadow-lg max-h-64 overflow-y-auto">
-        {schoolTeachers.length > 0 ? (
-          <div className="p-2 space-y-1">
-            {schoolTeachers.map((teacher: Prof) => {
-              const isChecked = selectedResponsables.includes(teacher.id);
-              return (
-                <label
-                  key={teacher.id}
-                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">
+              {isEditMode ? "Modifier la Classe" : "Nouvelle Classe"}
+            </h3>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddClass(new FormData(e.target as HTMLFormElement));
+              }}
+              onChange={(e) => {
+                const target = e.target as HTMLSelectElement;
+                if (target.name === "level") {
+                  setSelectedNiveau(target.value);
+                }
+              }}
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom de la classe
+                  </label>
                   <input
-                    type="checkbox"
-                    name="responsables"
-                    value={teacher.id}
-                    checked={isChecked}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedResponsables([...selectedResponsables, teacher.id]);
-                      } else {
-                        setSelectedResponsables(
-                          selectedResponsables.filter((id) => id !== teacher.id)
-                        );
-                      }
-                    }}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    type="text"
+                    name="name"
+                    required
+                    defaultValue={editingClass?.nom || ""}
+                    placeholder="Ex: 6ème A, CM2 B..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <span className="ml-3 text-sm text-gray-700">
-                    {teacher.nom} {teacher.prenom}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 text-center py-4">
-            Aucun professeur disponible
-          </p>
-        )}
-      </div>
-    )}
-  </div>
-)}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Niveau
+                  </label>
+                  <select
+                    name="level"
+                    required
+                    defaultValue={editingClass?.niveau || ""}
+                    onChange={(e) => setSelectedNiveau(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Sélectionner un niveau</option>
+                    <option value="maternelle">Maternelle</option>
+                    <option value="primaire">1er Cycle</option>
+                    <option value="college">2ème Cycle</option>
+                    <option value="lycee">Lycée</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Frais annuels (F CFA)
+                  </label>
+                  <input
+                    type="number"
+                    name="baseFee"
+                    required
+                    defaultValue={editingClass?.frais || ""}
+                    placeholder="150000"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                {/* Responsables selection - only for primaire and maternelle */}
+                {(selectedNiveau === "primaire" ||
+                  selectedNiveau === "maternelle" ||
+                  editingClass?.niveau === "primaire" ||
+                  editingClass?.niveau === "maternelle") && (
+                    <div className="relative">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Professeurs responsables (optionnel)
+                      </label>
 
-                </div>
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={handleCloseForm}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    {isEditMode ? "Enregistrer les modifications" : "Créer la classe"}
-                  </button>
-                </div>
-              </form>
-            </div>
+                      {/* Dropdown trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setOpenResponsables(!openResponsables)}
+                        className="w-full flex justify-between items-center border border-gray-300 rounded-lg px-3 py-2 bg-white hover:bg-gray-50"
+                      >
+                        <span className="text-sm text-gray-700">
+                          {selectedResponsables.length > 0
+                            ? `${selectedResponsables.length} sélectionné(s)`
+                            : "Sélectionner des professeurs"}
+                        </span>
+                        <svg
+                          className={`w-4 h-4 transition-transform ${openResponsables ? "rotate-180" : ""
+                            }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Dropdown content */}
+                      {openResponsables && (
+                        <div className="absolute z-40 mt-2 w-full border border-gray-300 rounded-lg bg-white shadow-lg max-h-64 overflow-y-auto">
+                          {schoolTeachers.length > 0 ? (
+                            <div className="p-2 space-y-1">
+                              {schoolTeachers.map((teacher: Prof) => {
+                                const isChecked = selectedResponsables.includes(teacher.id);
+                                return (
+                                  <label
+                                    key={teacher.id}
+                                    className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      name="responsables"
+                                      value={teacher.id}
+                                      checked={isChecked}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedResponsables([...selectedResponsables, teacher.id]);
+                                        } else {
+                                          setSelectedResponsables(
+                                            selectedResponsables.filter((id) => id !== teacher.id)
+                                          );
+                                        }
+                                      }}
+                                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                    />
+                                    <span className="ml-3 text-sm text-gray-700">
+                                      {teacher.nom} {teacher.prenom}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 text-center py-4">
+                              Aucun professeur disponible
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleCloseForm}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={isSubmitting}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      {isEditMode ? "Enregistrer les modifications" : "Créer la classe"}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
+        </div>
       )}
 
       {/* Add Subject Form Modal */}
@@ -621,7 +721,7 @@ export function ClassManager() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Sélectionner un professeur</option>
-                    {schoolTeachers.map((teacher : Prof) => (
+                    {schoolTeachers.map((teacher: Prof) => (
                       <option key={teacher.id} value={teacher.id}>
                         {teacher.nom}
                       </option>
@@ -634,14 +734,25 @@ export function ClassManager() {
                   type="button"
                   onClick={() => setShowAddSubjectForm(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={isSubmitting}
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  disabled={isSubmitting}
                 >
-                  Ajouter la matière
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      Ajouter la matière
+                    </>
+                  )}
                 </button>
               </div>
             </form>

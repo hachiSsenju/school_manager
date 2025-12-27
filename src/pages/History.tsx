@@ -8,7 +8,7 @@ interface HistoryRecord {
     value: any;
     prevValue: any;
     entity: string;
-    action: 'create' | 'delete' | 'transfert' | 'update';
+    action: 'create' | 'delete' | 'transfert' | 'update' | 'active';
     ecole: string;
     utilisateur: string;
     date: string;
@@ -21,7 +21,8 @@ const getActionLabel = (action: string): string => {
         'create': 'Création',
         'delete': 'Suppression',
         'transfert': 'Transfert',
-        'update': 'Modification'
+        'update': 'Modification',
+        'active': 'Activation/Désactivation',
     };
     return actionMap[action] || action;
 };
@@ -31,7 +32,8 @@ const getActionColor = (action: string): string => {
         'create': 'bg-green-100 text-green-800',
         'delete': 'bg-red-100 text-red-800',
         'transfert': 'bg-blue-100 text-blue-800',
-        'update': 'bg-yellow-100 text-yellow-800'
+        'update': 'bg-yellow-100 text-yellow-800',
+        'active': 'bg-orange-100 text-orange-800',
     };
     return colorMap[action] || 'bg-gray-100 text-gray-800';
 };
@@ -122,7 +124,7 @@ export default function History() {
     const eleveRecords = getFilteredRecords('Eleve');
     const classeRecords = getFilteredRecords('Classe');
     const profRecords = getFilteredRecords('Professeur');
-    const paymentRecords = getFilteredRecords('Payment');
+    // const paymentRecords = getFilteredRecords('Payment');
     const matiereRecords = getFilteredRecords('Matiere');
 
     // Get unique classes and actions for filters
@@ -533,7 +535,13 @@ export default function History() {
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <div className="text-sm font-medium text-gray-900">
-                                                                    {studentData?.nom} {studentData?.prenom}
+                                                                    {record.action === 'active' ? (
+                                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${record.value?.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                                            {record.value?.status ? 'true' : 'false'}
+                                                                        </span>
+                                                                    ) : (
+                                                                        `${studentData?.nom} ${studentData?.prenom}`
+                                                                    )}
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -551,14 +559,20 @@ export default function History() {
                                                                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                                                                                 <h4 className="font-semibold text-red-800 mb-2">Valeur précédente</h4>
                                                                                 <dl className="space-y-1 text-sm">
-                                                                                    <div><dt className="inline font-medium">Nom:</dt> <dd className="inline">{record.prevValue.nom}</dd></div>
-                                                                                    <div><dt className="inline font-medium">Prénom:</dt> <dd className="inline">{record.prevValue.prenom}</dd></div>
-                                                                                    <div><dt className="inline font-medium">Date de naissance:</dt> <dd className="inline">{record.prevValue.birthday}</dd></div>
-                                                                                    {record.prevValue.sexe && <div><dt className="inline font-medium">Sexe:</dt> <dd className="inline">{record.prevValue.sexe}</dd></div>}
-                                                                                    {record.prevValue.birthplace && <div><dt className="inline font-medium">Lieu de naissance:</dt> <dd className="inline">{record.prevValue.birthplace}</dd></div>}
-                                                                                    {record.prevValue.matricule && <div><dt className="inline font-medium">Matricule:</dt> <dd className="inline">{record.prevValue.matricule}</dd></div>}
-                                                                                    <div><dt className="inline font-medium">Classe:</dt> <dd className="inline">{record.prevValue.classe || 'N/A'}</dd></div>
-                                                                                    {record.prevValue.email_parent && <div><dt className="inline font-medium">Email parent:</dt> <dd className="inline">{record.prevValue.email_parent}</dd></div>}
+                                                                                    {record.action == 'active' ? (
+                                                                                        <div><dt className="inline font-medium">Status:</dt> <dd className="inline">{record.prevValue?.status ? 'true' : 'false'}</dd></div>
+                                                                                    ) : (
+                                                                                        <>
+                                                                                            <div><dt className="inline font-medium">Nom:</dt> <dd className="inline">{record.prevValue.nom}</dd></div>
+                                                                                            <div><dt className="inline font-medium">Prénom:</dt> <dd className="inline">{record.prevValue.prenom}</dd></div>
+                                                                                            <div><dt className="inline font-medium">Date de naissance:</dt> <dd className="inline">{record.prevValue.birthday}</dd></div>
+                                                                                            {record.prevValue.sexe && <div><dt className="inline font-medium">Sexe:</dt> <dd className="inline">{record.prevValue.sexe}</dd></div>}
+                                                                                            {record.prevValue.birthplace && <div><dt className="inline font-medium">Lieu de naissance:</dt> <dd className="inline">{record.prevValue.birthplace}</dd></div>}
+                                                                                            {record.prevValue.matricule && <div><dt className="inline font-medium">Matricule:</dt> <dd className="inline">{record.prevValue.matricule}</dd></div>}
+                                                                                            <div><dt className="inline font-medium">Classe:</dt> <dd className="inline">{record.prevValue.classe || 'N/A'}</dd></div>
+                                                                                            {record.prevValue.email_parent && <div><dt className="inline font-medium">Email parent:</dt> <dd className="inline">{record.prevValue.email_parent}</dd></div>}
+                                                                                        </>
+                                                                                    )}
                                                                                 </dl>
                                                                             </div>
                                                                         )}
@@ -566,15 +580,21 @@ export default function History() {
                                                                             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                                                                 <h4 className="font-semibold text-green-800 mb-2">Valeur actuelle</h4>
                                                                                 <dl className="space-y-1 text-sm">
-                                                                                    <div><dt className="inline font-medium">Nom:</dt> <dd className="inline">{record.value.nom}</dd></div>
-                                                                                    <div><dt className="inline font-medium">Prénom:</dt> <dd className="inline">{record.value.prenom}</dd></div>
-                                                                                    <div><dt className="inline font-medium">Date de naissance:</dt> <dd className="inline">{record.value.birthday}</dd></div>
-                                                                                    {record.value.sexe && <div><dt className="inline font-medium">Sexe:</dt> <dd className="inline">{record.value.sexe}</dd></div>}
-                                                                                    {record.value.birthplace && <div><dt className="inline font-medium">Lieu de naissance:</dt> <dd className="inline">{record.value.birthplace}</dd></div>}
-                                                                                    {record.value.matricule && <div><dt className="inline font-medium">Matricule:</dt> <dd className="inline">{record.value.matricule}</dd></div>}
-                                                                                    <div><dt className="inline font-medium">Classe:</dt> <dd className="inline">{record.value.classe || 'N/A'}</dd></div>
-                                                                                    {record.value.email_parent && <div><dt className="inline font-medium">Email parent:</dt> <dd className="inline">{record.value.email_parent}</dd></div>}
-                                                                                    {record.value.nom_ecole && <div><dt className="inline font-medium">École:</dt> <dd className="inline">{record.value.nom_ecole}</dd></div>}
+                                                                                    {record.action === 'active' ? (
+                                                                                        <div><dt className="inline font-medium">Status:</dt> <dd className="inline">{record.value?.status ? 'true' : 'false'}</dd></div>
+                                                                                    ) : (
+                                                                                        <>
+                                                                                            <div><dt className="inline font-medium">Nom:</dt> <dd className="inline">{record.value.nom}</dd></div>
+                                                                                            <div><dt className="inline font-medium">Prénom:</dt> <dd className="inline">{record.value.prenom}</dd></div>
+                                                                                            <div><dt className="inline font-medium">Date de naissance:</dt> <dd className="inline">{record.value.birthday}</dd></div>
+                                                                                            {record.value.sexe && <div><dt className="inline font-medium">Sexe:</dt> <dd className="inline">{record.value.sexe}</dd></div>}
+                                                                                            {record.value.birthplace && <div><dt className="inline font-medium">Lieu de naissance:</dt> <dd className="inline">{record.value.birthplace}</dd></div>}
+                                                                                            {record.value.matricule && <div><dt className="inline font-medium">Matricule:</dt> <dd className="inline">{record.value.matricule}</dd></div>}
+                                                                                            <div><dt className="inline font-medium">Classe:</dt> <dd className="inline">{record.value.classe || 'N/A'}</dd></div>
+                                                                                            {record.value.email_parent && <div><dt className="inline font-medium">Email parent:</dt> <dd className="inline">{record.value.email_parent}</dd></div>}
+                                                                                            {record.value.nom_ecole && <div><dt className="inline font-medium">École:</dt> <dd className="inline">{record.value.nom_ecole}</dd></div>}
+                                                                                        </>
+                                                                                    )}
                                                                                 </dl>
                                                                             </div>
                                                                         )}

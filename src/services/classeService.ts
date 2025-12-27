@@ -47,5 +47,9 @@ export const ClasseService = {
         );
         console.log(response)
         return response.data;
+    },
+    toggleActive : async (id: any) =>{
+    const response = await api.options(`/api/classe/Toggleinactive/${id}`);
+    return response.data;
     }
 }

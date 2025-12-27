@@ -15,6 +15,7 @@ import { EcoleService } from "../services/ecoleServices";
 import { ArrowLeft, BookOpen, Download, Eye, Plus, Printer, Users } from "lucide-react";
 import { TrimesterServices } from "../services/trimesterService";
 import { SessionServices } from "../services/sessionServices";
+import Swal from 'sweetalert2';
 
 // Helper function to convert niveau code to display name
 const getNiveauDisplayName = (niveau: string): string => {
@@ -57,7 +58,7 @@ export default function GradesPage() {
   useEffect(() => {
     const getSchool = async () => {
       const response = await EcoleService.getById(SessionServices.getSchoolId());
-      if(response){
+      if (response) {
         setSchool(response);
       }
     };
@@ -90,20 +91,20 @@ export default function GradesPage() {
     (t: Trimester) => t.id === selectedTrimester
   );
 
-    async function Refresh() {
-       try {
-          const bulletin =
-            await BulletinService.getBulletinsByStudentAndSemeterId(
-              selectedStudent,
-              selectedTrimester
-            );
-          setCurrentBulletin(bulletin);
-          setBltId(bulletin.id);
-        } catch (err) {
-          console.error("Erreur lors du chargement du bulletin:", err);
-          setCurrentBulletin(null);
-        }
+  async function Refresh() {
+    try {
+      const bulletin =
+        await BulletinService.getBulletinsByStudentAndSemeterId(
+          selectedStudent,
+          selectedTrimester
+        );
+      setCurrentBulletin(bulletin);
+      setBltId(bulletin.id);
+    } catch (err) {
+      console.error("Erreur lors du chargement du bulletin:", err);
+      setCurrentBulletin(null);
     }
+  }
   useEffect(() => {
     const fetchBulletin = async () => {
       if (selectedStudent && selectedTrimester) {
@@ -189,9 +190,29 @@ export default function GradesPage() {
         note: "",
       });
       Refresh();
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Note ajoutée !',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
     } catch (err) {
       console.error("Erreur lors de l'ajout de la note:", err);
-      setError("Erreur lors de l'ajout de la note. Vérifiez les données.");
+      // setError("Erreur lors de l'ajout de la note. Vérifiez les données.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Ajout de la note échoué.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
     } finally {
       setIsLoading(false);
     }
@@ -224,9 +245,29 @@ export default function GradesPage() {
       setShowEditGradeForm(false);
       Refresh()
       setEditingGrade(null);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Note modifiée !',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
     } catch (err) {
       console.error("Erreur lors de la modification de la note:", err);
-      setError("Erreur lors de la modification de la note.");
+      // setError("Erreur lors de la modification de la note.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Modification de la note échouée.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
     } finally {
       setIsLoading(false);
     }
@@ -283,9 +324,8 @@ export default function GradesPage() {
 
     const opt = {
       margin: 0.5,
-      filename: `bulletin_${selectedStudentData?.nom}_${
-        selectedStudentData?.prenom
-      }_${selectedTrimesterData?.nom || "trimestre"}.pdf`,
+      filename: `bulletin_${selectedStudentData?.nom}_${selectedStudentData?.prenom
+        }_${selectedTrimesterData?.nom || "trimestre"}.pdf`,
       image: { type: "jpeg" as const, quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: {
@@ -365,11 +405,10 @@ export default function GradesPage() {
                       setSelectedClass(classe.id);
                       setSelectedStudent(""); // Reset student selection
                     }}
-                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedClass === classe.id
-                        ? "bg-blue-50 border-r-2 border-blue-500"
-                        : ""
-                    }`}
+                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedClass === classe.id
+                      ? "bg-blue-50 border-r-2 border-blue-500"
+                      : ""
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -420,11 +459,10 @@ export default function GradesPage() {
                     <div
                       key={student.id}
                       onClick={() => setSelectedStudent(student.id)}
-                      className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedStudent === student.id
-                          ? "bg-blue-50 border-r-2 border-blue-500"
-                          : ""
-                      }`}
+                      className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedStudent === student.id
+                        ? "bg-blue-50 border-r-2 border-blue-500"
+                        : ""
+                        }`}
                     >
                       <div className="flex items-center">
                         <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
@@ -614,8 +652,8 @@ export default function GradesPage() {
                                   </span>{" "}
                                   {selectedStudentData?.birthday
                                     ? new Date(
-                                        selectedStudentData.birthday
-                                      ).toLocaleDateString("fr-FR")
+                                      selectedStudentData.birthday
+                                    ).toLocaleDateString("fr-FR")
                                     : "N/A"}
                                 </p>
                               </div>
@@ -1044,7 +1082,7 @@ export default function GradesPage() {
                           }));
                         }}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        //  readOnly={isPrefilledReadOnly}
+                      //  readOnly={isPrefilledReadOnly}
                       />
                     </div>
                     <div>

@@ -14,6 +14,7 @@ import { Ecole, Prof } from "../types";
 import { EcoleService } from "../services/ecoleServices";
 import { ProfsService } from "../services/profsService";
 import { SessionServices } from "../services/sessionServices";
+import Swal from 'sweetalert2';
 
 export function Teachers() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,6 +24,7 @@ export function Teachers() {
   const [error, setError] = useState<string>("");
   const [school, setSchool] = useState<Ecole | null>(null);
   const [profs, setProfs] = useState<Prof[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ✅ Get the school ID (from session or fixed for now)
   const schoolId = SessionServices.getSchoolId();
@@ -67,6 +69,7 @@ export function Teachers() {
   );
 
   const handleAddProfessor = async (formData: FormData) => {
+    setIsSubmitting(true);
     try {
       // Check if we're in edit mode
       if (isEditMode && editingProf) {
@@ -90,9 +93,31 @@ export function Teachers() {
       setShowAddForm(false);
       setIsEditMode(false);
       setEditingProf(null);
+
+      Swal.fire({
+        icon: 'success',
+        title: isEditMode ? 'Professeur modifié !' : 'Professeur ajouté !',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
     } catch (err) {
       console.error("Erreur lors de l'ajout/modification du professeur :", err);
-      setError(isEditMode ? "Modification du professeur échouée." : "Ajout du professeur échoué.");
+      // setError(isEditMode ? "Modification du professeur échouée." : "Ajout du professeur échoué.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: isEditMode ? "Modification échouée." : "Ajout échoué.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -182,7 +207,7 @@ export function Teachers() {
                     </div>
                   </td>
 
-                 
+
 
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col text-sm text-gray-700">
@@ -199,7 +224,7 @@ export function Teachers() {
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <button 
+                      <button
                         onClick={() => handleEdit(prof)}
                         className="text-blue-600 hover:text-blue-900 p-1 rounded"
                       >
@@ -284,14 +309,25 @@ export function Teachers() {
                   type="button"
                   onClick={handleCloseForm}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={isSubmitting}
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  disabled={isSubmitting}
                 >
-                  {isEditMode ? "Enregistrer les modifications" : "Ajouter"}
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      {isEditMode ? "Enregistrer les modifications" : "Ajouter"}
+                    </>
+                  )}
                 </button>
               </div>
             </form>

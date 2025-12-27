@@ -72,6 +72,7 @@ export default function Finances() {
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [expandedHistoryRows, setExpandedHistoryRows] = useState<Set<number>>(new Set());
   const [showHistory, setShowHistory] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchPayments();
@@ -156,6 +157,7 @@ export default function Finances() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const paymentData = {
       somme: parseFloat(formData.amount),
@@ -180,8 +182,29 @@ export default function Finances() {
       resetForm();
       fetchPayments();
       fetchHistory(); // Refresh history after action
+
+      Swal.fire({
+        icon: 'success',
+        title: editingPayment ? 'Transaction modifiée !' : 'Transaction ajoutée !',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
     } catch (error) {
       console.error('Error saving payment:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Une erreur est survenue lors de l'enregistrement.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -815,121 +838,112 @@ export default function Finances() {
                     Motif *
                   </label>
                   <select
-                    value={
-                      ['inscription', 'mensualite', 'trimestre', 'salaire', 'autre'].includes(formData.motif)
-                        ? formData.motif
-                        : 'autre'
-                    }
-                    onChange={(e) => {
-                      const selectedMotif = e.target.value as 'inscription' | 'mensualite' | 'trimestre' | 'salaire' | 'autre';
-                      // Automatically set type to expense if salaire is selected
-                      const newType = selectedMotif === 'salaire' ? 'expense' : formData.type;
-                      // If selecting a predefined option, use it directly; if "autre", keep current custom value or set to "autre"
-                      const motifValue = selectedMotif === 'autre'
-                        ? (['inscription', 'mensualite', 'trimestre', 'salaire'].includes(formData.motif) ? 'autre' : formData.motif)
-                        : selectedMotif;
-                      setFormData({ ...formData, motif: motifValue, type: newType });
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    value={formData.motif}
+                    onChange={(e) => setFormData({ ...formData, motif: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
                   >
-                    <option value="inscription">Inscription</option>
-                    <option value="mensualite">Mensualité</option>
-                    <option value="trimestre">Trimestre</option>
-                    <option value="salaire">Salaire</option>
-                    <option value="autre">Autre</option>
+                    {formData.type === 'income' ? (
+                      <>
+                        <option value="inscription">Inscription</option>
+                        <option value="mensualite">Mensualité</option>
+                        <option value="trimestre">Trimestre</option>
+                        <option value="autre">Autre</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="salaire">Salaire</option>
+                        <option value="autre">Autre</option>
+                      </>
+                    )}
                   </select>
-                  {(!['inscription', 'mensualite', 'trimestre', 'salaire'].includes(formData.motif)) && (
-                    <input
-                      type="text"
-                      required
-                      placeholder="Saisir le motif manuellement"
-                      value={formData.motif === 'autre' ? '' : formData.motif}
-                      onChange={(e) => {
-                        setFormData({ ...formData, motif: e.target.value || 'autre' });
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent mt-2"
-                    />
-                  )}
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Montant (FCFA) *
+                    Montant *
                   </label>
                   <input
                     type="number"
-                    required
-                    step="0.01"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date *
+                  </label>
                   <input
                     type="date"
-                    required
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Élève (optionnel)
-                  </label>
-                  <select
-                    value={formData.eleve_id}
-                    onChange={(e) => setFormData({ ...formData, eleve_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  >
-                    <option value="">Aucun</option>
-                    {schoolStudents.map((student: Student) => (
-                      <option key={student.id} value={student.id}>
-                        {student.nom} {student.prenom}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Conditional fields based on context */}
+                {(formData.motif === 'inscription' || formData.motif === 'mensualite' || formData.motif === 'trimestre') && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Classe
+                      </label>
+                      <select
+                        value={formData.classe_id}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            classe_id: e.target.value,
+                            eleve_id: '' // Reset student when class changes
+                          });
+                        }}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      >
+                        <option value="">Sélectionner une classe</option>
+                        {schoolClasses.map(c => (
+                          <option key={c.id} value={c.id}>{c.nom}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Élève
+                      </label>
+                      <select
+                        value={formData.eleve_id}
+                        onChange={(e) => setFormData({ ...formData, eleve_id: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        disabled={!formData.classe_id}
+                      >
+                        <option value="">Sélectionner un élève</option>
+                        {schoolStudents
+                          .filter(s => !formData.classe_id || (s.classe && s.classe.id.toString() === formData.classe_id))
+                          .map(s => (
+                            <option key={s.id} value={s.id}>{s.nom} {s.prenom}</option>
+                          ))}
+                      </select>
+                    </div>
+                  </>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Classe (optionnel)
-                  </label>
-                  <select
-                    value={formData.classe_id}
-                    onChange={(e) => setFormData({ ...formData, classe_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  >
-                    <option value="">Aucune</option>
-                    {schoolClasses.map((classe: Classe) => (
-                      <option key={classe.id} value={classe.id}>
-                        {classe.nom}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Professeur (optionnel)
-                  </label>
-                  <select
-                    value={formData.prof_id}
-                    onChange={(e) => setFormData({ ...formData, prof_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  >
-                    <option value="">Aucun</option>
-                    {schoolProfs.map((prof: Prof) => (
-                      <option key={prof.id} value={prof.id}>
-                        {prof.nom} {prof.prenom}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {formData.type === 'expense' && formData.motif === 'salaire' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Professeur/Personnel
+                    </label>
+                    <select
+                      value={formData.prof_id}
+                      onChange={(e) => setFormData({ ...formData, prof_id: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    >
+                      <option value="">Sélectionner un bénéficiaire</option>
+                      {schoolProfs.map(p => (
+                        <option key={p.id} value={p.id}>{p.nom} {p.prenom}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4">
@@ -939,12 +953,12 @@ export default function Finances() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -952,15 +966,26 @@ export default function Finances() {
                     setEditingPayment(null);
                     resetForm();
                   }}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  disabled={isSubmitting}
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2"
+                  disabled={isSubmitting}
                 >
-                  {editingPayment ? 'Modifier' : 'Ajouter'}
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      {editingPayment ? 'Modifier' : 'Ajouter'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>

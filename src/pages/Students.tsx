@@ -41,6 +41,7 @@ export function StudentsManager() {
   const [filterFinancialStatus, setFilterFinancialStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "class" | "status" | "birthday">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [schools, setSchools] = useState<Ecole[]>([]);
   const [schoolStudents, setSchoolStudents] = useState<Student[]>([]);
@@ -53,6 +54,7 @@ export function StudentsManager() {
       if (response) {
         setSchools(response);
         setSchoolStudents(response.eleves || []);
+        console.log(schoolStudents);
         setSchoolClasses(response.classes || []);
       } else {
         setError("Aucune école trouvée.");
@@ -197,6 +199,7 @@ export function StudentsManager() {
   };
 
   const handleAddStudent = async (formData: FormData) => {
+    setIsSubmitting(true);
     try {
       const ecoleId = SessionServices.getSchoolId();
       if (!ecoleId) throw new Error("Aucune école disponible");
@@ -236,9 +239,31 @@ export function StudentsManager() {
       setShowAddForm(false);
       setIsEditMode(false);
       setEditingStudent(null);
+
+      Swal.fire({
+        icon: 'success',
+        title: isEditMode ? "Élève modifié !" : "Élève ajouté !",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
     } catch (err) {
       console.error("Erreur lors de l'ajout de l'élève:", err);
-      setError(isEditMode ? "Modification de l'élève échoué." : "Ajout de l'élève échoué.");
+      // setError(isEditMode ? "Modification de l'élève échoué." : "Ajout de l'élève échoué.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: isEditMode ? "Modification échouée." : "Ajout échoué.",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -598,14 +623,25 @@ export function StudentsManager() {
                   type="button"
                   onClick={handleCloseForm}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={isSubmitting}
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  disabled={isSubmitting}
                 >
-                  {isEditMode ? "Enregistrer les modifications" : "Ajouter l'élève"}
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      {isEditMode ? "Enregistrer les modifications" : "Ajouter l'élève"}
+                    </>
+                  )}
                 </button>
               </div>
             </form>
