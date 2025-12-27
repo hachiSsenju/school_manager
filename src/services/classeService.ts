@@ -50,6 +50,6 @@ export const ClasseService = {
     },
     toggleActive : async (id: any) =>{
     const response = await api.options(`/api/classe/Toggleinactive/${id}`);
-    return response.data;
+    return response.status;
     }
 }

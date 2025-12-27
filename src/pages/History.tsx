@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { History as HistoryIcon, GraduationCap, School, Users, BookOpen, ChevronDown, ChevronRight, Filter, ArrowUpDown } from 'lucide-react';
+import { History as HistoryIcon, GraduationCap, School, Users, BookOpen, ChevronDown, ChevronRight, Filter, ArrowUpDown, LucideClock1, Undo, Undo2 } from 'lucide-react';
 import { HistoryServices } from '../services/histotyService';
 import { SessionServices } from '../services/sessionServices';
+import Swal from 'sweetalert2';
+import { ClasseService } from '../services/classeService';
 
 interface HistoryRecord {
     id: number;
@@ -328,6 +330,44 @@ export default function History() {
     };
 
     const filteredMatiereRecords = getFilteredAndSortedMatiereRecords();
+
+    const handleRollBack = (id: number,nom : string) => async () => {
+        Swal.fire({
+            title: `Etes vous sur de vouloir réactiver la classe ${nom} ?`,
+            // text: 'Êtes-vous sûr de vouloir annuler cette action ? Cette opération est irréversible.',
+            icon: 'warning',
+            confirmButtonText : 'réactiver',
+            cancelButtonText : 'annuler',
+        }).then(async result => {
+            if (result.isConfirmed) {
+               const response = await ClasseService.toggleActive(id);
+               if(response==202){
+                Swal.fire({
+                       icon: 'success',
+                       text: `La classe ${nom} a été réactivée avec succès.`,
+                       toast: true,
+                       position: 'top-end',
+                       showConfirmButton: false,
+                       timer: 3000,
+                       timerProgressBar: true
+                     });
+               
+               }
+               else{
+                Swal.fire({
+                    toast : true,
+                    timerProgressBar : true,
+                    timer : 3000,
+                    position : 'top-end',
+                    icon : 'error',
+                    text: `Erreur lors de la réactivation de la classe ${nom}.`
+                })
+               }
+            }
+        });
+    };
+
+
 
     if (loading) {
         return (
@@ -790,7 +830,7 @@ export default function History() {
                                                             <tr className="bg-gray-50">
                                                                 <td colSpan={6} className="px-6 py-4">
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                        {record.prevValue && (
+                                                                        {record.prevValue && record.action != "active" &&(
                                                                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                                                                                 <h4 className="font-semibold text-red-800 mb-2">Valeur précédente</h4>
                                                                                 <dl className="space-y-1 text-sm">
@@ -800,7 +840,7 @@ export default function History() {
                                                                                 </dl>
                                                                             </div>
                                                                         )}
-                                                                        {record.value && (
+                                                                        {record.value && record.action != "active" &&(
                                                                             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                                                                 <h4 className="font-semibold text-green-800 mb-2">Valeur actuelle</h4>
                                                                                 <dl className="space-y-1 text-sm">
@@ -808,6 +848,15 @@ export default function History() {
                                                                                     <div><dt className="inline font-medium">Niveau:</dt> <dd className="inline">{record.value.niveau}</dd></div>
                                                                                     {record.value.frais && <div><dt className="inline font-medium">Frais:</dt> <dd className="inline">{record.value.frais} FCFA</dd></div>}
                                                                                 </dl>
+                                                                            </div>
+                                                                        )}
+                                                                        {record.action == "active" && (
+                                                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 d-flex justify-items-center align-items-center align-center">
+                                                                                <h4 className="font-semibold text-blue-800 mb-2">Action</h4>
+                                                                                <p className="text-sm" style={{color : record.value.active ? "green" : "red"}}>La classe a été {!record.value.active ? "désactivée" : "activée"}.</p>
+                                                                                <button onClick={handleRollBack(record.value.id,record.value.nom)}>
+                                                                                <Undo2 size={48} className="mx-auto mt-2" style={{color : "red",display : record.value.active ? "none" : "block"}} />
+                                                                                </button>
                                                                             </div>
                                                                         )}
                                                                     </div>
