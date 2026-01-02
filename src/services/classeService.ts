@@ -7,7 +7,7 @@ export const ClasseService = {
     },
     getAllClassesByUid: async () => {
         const $uid = sessionStorage.getItem("id");
-        const response = await api.get(`/api/classes/${$uid}`);
+        const response = await api.get(`/api/classes/user/${$uid}`);
         return response.data;
     },
     getById: async (id: number) => {

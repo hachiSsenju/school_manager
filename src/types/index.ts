@@ -37,6 +37,7 @@ export interface Student {
   nom: string;
   prenom: string;
   birthday: string;
+  adesion: string;
   solde_initial: number;
   grades: Grade[];
   classe: Classe;

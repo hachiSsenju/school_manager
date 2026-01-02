@@ -215,6 +215,7 @@ export function StudentsManager() {
           nom: nom,
           prenom: prenom,
           birthday: birthday,
+          adesion: formData.get("adesion") as string,
           birthplace: formData.get("birthplace") as string,
           sexe: formData.get("sexe") as string,
           classe_id: formData.get("classId"),
@@ -226,6 +227,7 @@ export function StudentsManager() {
           nom: nom,
           prenom: prenom,
           birthday: birthday,
+          adesion: formData.get("adesion") as string,
           birthplace: formData.get("birthplace") as string,
           sexe: formData.get("sexe") as string,
           matricule: generateMatricule(nom, prenom, birthday),
@@ -411,6 +413,9 @@ export function StudentsManager() {
                   Classe
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date d'adésion
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Situation Financière
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -463,6 +468,13 @@ export function StudentsManager() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-gray-900">
                           {student.classe.nom}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900">
+                          {new Date(student.adesion).toLocaleDateString(
+                                "fr-FR"
+                              )}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -525,7 +537,7 @@ export function StudentsManager() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prénom
+                    Prénom *
                   </label>
                   <input
                     type="text"
@@ -537,7 +549,7 @@ export function StudentsManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom
+                    Nom *
                   </label>
                   <input
                     type="text"
@@ -549,12 +561,12 @@ export function StudentsManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de naissance
+                    Date d'adésion *
                   </label>
                   <input
                     type="date"
-                    name="dateOfBirth"
-                    defaultValue={editingStudent?.birthday ? new Date(editingStudent.birthday).toISOString().split('T')[0] : ""}
+                    name="adesion"
+                    defaultValue={editingStudent?.adesion ? new Date(editingStudent.adesion).toISOString().split('T')[0] : ""}
                     max={new Date().toISOString().split('T')[0]}
                     required
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -562,7 +574,20 @@ export function StudentsManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Lieu de naissance
+                    Date de naissance (optionnel)
+                  </label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    defaultValue={editingStudent?.birthday ? new Date(editingStudent.birthday).toISOString().split('T')[0] : ""}
+                    max={new Date().toISOString().split('T')[0]}
+                    
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lieu de naissance *
                   </label>
                   <input
                     type="text"
@@ -575,7 +600,7 @@ export function StudentsManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sexe
+                    Sexe *
                   </label>
                   <select
                     name="sexe"
@@ -590,7 +615,7 @@ export function StudentsManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Classe
+                    Classe (optionnel)
                   </label>
                   <select
                     name="classId"

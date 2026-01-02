@@ -180,6 +180,7 @@ export function ClassDetails() {
           nom: nom,
           prenom: prenom,
           birthday: birthday,
+          adesion: formData.get("adesion") as string,
           birthplace: formData.get("birthplace") as string,
           sexe: formData.get("sexe") as string,
           matricule: generateMatricule(nom, prenom, birthday),
@@ -532,6 +533,9 @@ export function ClassDetails() {
                       Prénom
                     </th>
                     <th className="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Date d'adesion
+                    </th>
+                    <th className="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">
                       Date de naissance
                     </th>
                     <th className="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">
@@ -547,6 +551,9 @@ export function ClassDetails() {
                       </td>
                       <td className="border border-gray-200 px-4 py-3 text-sm text-gray-900">
                         {eleve.prenom}
+                      </td>
+                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-900">
+                        {new Date(eleve.adesion).toLocaleDateString()}
                       </td>
                       <td className="border border-gray-200 px-4 py-3 text-sm text-gray-900">
                         {new Date(eleve.birthday).toLocaleDateString()}
@@ -834,7 +841,7 @@ export function ClassDetails() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Prénom
+                        Prénom *
                       </label>
                       <input
                         type="text"
@@ -845,7 +852,7 @@ export function ClassDetails() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nom
+                        Nom *
                       </label>
                       <input
                         type="text"
@@ -856,11 +863,11 @@ export function ClassDetails() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Date de naissance
+                        Date d'adesion *
                       </label>
                       <input
                         type="date"
-                        name="dateOfBirth"
+                        name="adesion"
                         max={new Date().toISOString().split('T')[0]}
                         required
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -868,7 +875,18 @@ export function ClassDetails() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Lieu de naissance
+                        Date de naissance (optionnel)
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        max={new Date().toISOString().split('T')[0]}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Lieu de naissance *
                       </label>
                       <input
                         type="text"
@@ -880,7 +898,7 @@ export function ClassDetails() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sexe
+                        Sexe *
                       </label>
                       <select
                         name="sexe"
@@ -894,7 +912,7 @@ export function ClassDetails() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Classe
+                        Classe (optionnel)
                       </label>
                       <input
                         type="text"
@@ -908,7 +926,7 @@ export function ClassDetails() {
                         Numéro parent (optionnel)
                       </label>
                       <input
-                        type="email"
+                        type="telephone"
                         name="parentEmail"
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
