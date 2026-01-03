@@ -9,6 +9,7 @@ export const paymentService = {
       type: paymentData.motif ?? paymentData.type,
       motif: paymentData.motif ?? paymentData.type,
       date: paymentData.date ?? new Date().toISOString(),
+      trimestre: paymentData.trimestre ?? null,
       eleve_id: paymentData.eleve_id ?? null,
       description: paymentData.description ?? "aucune descrition fournie",
       classe_id: paymentData.classesId ?? null,
@@ -40,6 +41,7 @@ export const paymentService = {
       description: paymentData.description ?? "aucune descrition fournie",
       classe_id: paymentData.classesId ?? null,
       prof_id: paymentData.prof_id ?? null,
+      trimestre: paymentData.trimestre ?? null,
     });
     return response.data;
   },

@@ -12,7 +12,9 @@ import { ClassDetails } from "./pages/ClasseDetails";
 import { StudentDetails } from "./pages/StudentDetails";
 import { ProfDetails } from "./pages/ProfDetails";
 import History from "./pages/History";
+import SuiviFinancier from "./pages/SuiviFinancier";
 // import ClassDetails from "./pages/ClasseDetails";
+
 
 function App() {
   return SessionServices.getSchoolId() ? (
@@ -28,6 +30,7 @@ function App() {
           <Route path="/teachers/:id" element={<ProfDetails />} />
           <Route path="/finances" element={<Finances />} />
           <Route path="/history" element={<History />} />
+          <Route path="/suivi-financier" element={<SuiviFinancier />} />
           <Route path="/welcome" element={<DashboardWelcomePage />} />
           <Route path="/reports" element={<GradesPage />} />
         </Routes>

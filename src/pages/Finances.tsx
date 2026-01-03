@@ -66,6 +66,7 @@ export default function Finances() {
     eleve_id: '',
     classe_id: '',
     prof_id: '',
+    trimestre: '0',
   });
 
   // History state
@@ -168,6 +169,7 @@ export default function Finances() {
       eleve_id: formData.eleve_id || null,
       classesId: formData.classe_id || null,
       prof_id: formData.prof_id || null,
+      trimestre: formData.motif === 'trimestre' ? parseInt(formData.trimestre as string) : undefined
     };
 
     try {
@@ -251,6 +253,7 @@ export default function Finances() {
       eleve_id: payment.eleve?.id?.toString() || '',
       classe_id: payment.classe?.id?.toString() || '',
       prof_id: payment.prof?.id?.toString() || '',
+      trimestre: (payment as any).trimestre?.toString() || '0'
     });
     setShowModal(true);
   };
@@ -330,6 +333,7 @@ export default function Finances() {
       eleve_id: '',
       classe_id: '',
       prof_id: '',
+      trimestre: '0',
     });
   };
 
@@ -857,6 +861,23 @@ export default function Finances() {
                     )}
                   </select>
                 </div>
+
+                {formData.motif === 'trimestre' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Trimestre *
+                    </label>
+                    <select
+                      value={formData.trimestre}
+                      onChange={(e) => setFormData({ ...formData, trimestre: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    >
+                      <option value="0">Premier trimestre</option>
+                      <option value="1">Deuxième trimestre</option>
+                      <option value="2">Troisième trimestre</option>
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Montant *
@@ -865,7 +886,11 @@ export default function Finances() {
                     type="number"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className={`w-full rounded-lg px-3 py-2 text-lg font-bold border-2 transition-colors ${formData.type === 'income'
+                        ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:ring-emerald-500 focus:border-emerald-600'
+                        : 'border-red-500 text-red-700 bg-red-50 focus:ring-red-500 focus:border-red-600'
+                      }`}
+                    placeholder="0 FCFA"
                     required
                   />
                 </div>

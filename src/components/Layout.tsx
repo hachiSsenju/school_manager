@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { LayoutDashboard, GraduationCap, School, Users, DollarSign, FileText, Menu, X, User, History } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, School, Users, DollarSign, FileText, Menu, X, User, History, LineChartIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SessionServices } from '../services/sessionServices';
 import Profile from './Profile';
@@ -14,6 +14,7 @@ const menuItems = [
   { id: 'Classes', label: 'Classes', icon: School, path: '/classes' },
   { id: 'students', label: 'Élèves', icon: GraduationCap, path: '/students' },
   { id: 'finances', label: 'Finances', icon: DollarSign, path: '/finances' },
+  { id: 'suivi-financier', label: 'Suivi des paiements', icon: LineChartIcon, path: '/suivi-financier' },
   { id: 'history', label: 'Historique', icon: History, path: '/history' },
   // { id: 'reports', label: 'Bulletins', icon: FileText, path: '/reports' },
 ];
