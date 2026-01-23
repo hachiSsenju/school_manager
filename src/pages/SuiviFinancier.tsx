@@ -44,7 +44,8 @@ export default function SuiviFinancier() {
                 const schoolId = SessionServices.getSchoolId();
                 if (schoolId) {
                     const data = await financesService.getAllByEcoleID(schoolId);
-                    setFinanceData(data);
+                    // API returns object indexed by ID, convert to array
+                    setFinanceData(Object.values(data));
                 }
             } catch (error) {
                 console.error('Error fetching financial data:', error);
